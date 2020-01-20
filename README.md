@@ -30,20 +30,20 @@ classifier (use ``validation.txt`` for this instead).
 
 - ``classification.py``
 
-Contains the skeleton code for the ``DecisionTreeClassifier`` class. Your task 
+	* Contains the skeleton code for the ``DecisionTreeClassifier`` class. Your task 
 is to implement the ``train()`` and ``predict()`` methods.
 
 
 - ``eval.py``
 
-Contains the skeleton code for the ``Evaluator`` class. Your task is to 
+	* Contains the skeleton code for the ``Evaluator`` class. Your task is to 
 implement the ``confusion_matrix()``, ``accuracy()``, ``precision()``, 
 ``recall()``, and ``f1_score()`` methods.
 
 
 - ``example_main.py``
 
-Contains an example of how the evaluation script on LabTS might use the classes
+	* Contains an example of how the evaluation script on LabTS might use the classes
 and invoke the methods defined in ``classification.py`` and ``eval.py``.
 
 
