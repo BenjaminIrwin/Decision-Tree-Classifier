@@ -33,8 +33,28 @@ class DecisionTreeClassifier(object):
     
     
     def train(self, x, y):
-        """ Constructs a decision tree classifier from data
         
+        length = len(x)
+        alphabet = np.array(["A","C","E","G","O","Q"])
+        alphabet_count = np.zeros((len(alphabet)))
+        alphabet_probabilty = np.zeros((len(alphabet)))
+        information = np.zeros((len(alphabet)))
+        
+        for indx,letter in enumerate(alphabet):
+            for index in range(0,length):
+                if(letter == y[index]):
+                    alphabet_count[indx]+=1
+                
+        alphabet_probabilty[:] = np.round(alphabet_count[:]/length,3)
+        #print(alphabet_probabilty)
+        information[0:] = alphabet_probabilty[0:] * np.log2(alphabet_probabilty[0:])
+        #test_info = alphabet_probabilty[0] * np.log2(alphabet_probabilty[0])
+        #test_info_2 = alphabet_probabilty[1] * np.log2(alphabet_probabilty[1])
+        #print(information)
+        root_entropy = -1*np.sum(information)
+        #print(root_entropy)
+        
+        """
         Parameters
         ----------
         x : numpy.array
@@ -69,6 +89,10 @@ class DecisionTreeClassifier(object):
     
     
     def predict(self, x):
+        
+        
+        
+        
         """ Predicts a set of samples using the trained DecisionTreeClassifier.
         
         Assumes that the DecisionTreeClassifier has already been trained.
