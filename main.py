@@ -35,8 +35,15 @@ if __name__ == "__main__":
     classifier = classifier.train(x,y)
 
     print("Loading the test set...")
+    
+    x_test = np.array([
+            [1,6,3], 
+            [0,5,5], 
+            [1,5,0], 
+            [2,4,2]
+        ])
     #predictions = classifier.predict(x)
-
+    predictions = classifier.predict(x_test)
     
     
 

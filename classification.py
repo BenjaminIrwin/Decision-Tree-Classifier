@@ -33,6 +33,7 @@ class DecisionTreeClassifier(object):
     
     def __init__(self):
         self.is_trained = False
+        
     
     
     def train(self, x, y):
@@ -46,8 +47,8 @@ class DecisionTreeClassifier(object):
         #x=np.insert(x,0,index,axis=1)
         #y=x=np.insert(y,0,index,axis=1)
         
-        root_node = self.induce_decision_tree(x,y)
-        print(root_node)
+        self.root_node = self.induce_decision_tree(x,y)
+        print(self.root_node)
         
         # set a flag so that we know that the classifier has been trained
         self.is_trained = True
@@ -241,8 +242,6 @@ class DecisionTreeClassifier(object):
     def predict(self, x):
         
         
-        
-        
         """ Predicts a set of samples using the trained DecisionTreeClassifier.
         
         Assumes that the DecisionTreeClassifier has already been trained.
@@ -267,26 +266,36 @@ class DecisionTreeClassifier(object):
         # set up empty N-dimensional vector to store predicted labels 
         # feel free to change this if needed
         predictions = np.zeros((x.shape[0],), dtype=np.object)
+         #load the classifier
+        root_of_tree = self.root_node
         
-        
-        #######################################################################
-        #                 ** TASK 2.2: COMPLETE THIS METHOD **
-        #######################################################################
-        
-    
+        for j in range(0,len(x)):
+            
+            print(x[j][:])
+            predictions[j] = self.recursive_predict(root_of_tree,x[j][:])
+            print("prediction:" + str(predictions[j]))
+            
+        #{'attribute': 1, 'right': {'attribute': 2, 'right': 'A', 'value': 1, 'left': 'C'}, 'value': 5, 'left': 'C'}
         # remember to change this if you rename the variable
         return predictions
         
-
-                
-
-    
-    
-    def terminal_leaf(self,data_set):
-        labels,count = np.unique(data_set,return_counts = True)
-        index = np.argmax(count)
-        return data_set[index]
+    def recursive_predict(self,tree,attributes):
         
+        #Check the required attribute is greater or less than the node
+        if attributes[tree["attribute"]] < tree["value"]:
+            
+            if isinstance(tree["left"],dict):
+                return self.recursive_predict(tree["left"],attributes)
+            else:
+                return tree["left"]
+            
+        else:
+            if isinstance(tree["right"],dict):
+                return self.recursive_predict(tree["right"],attributes)
+            else:
+                return tree["right"]
+                    
+                
         
         
         
