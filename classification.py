@@ -47,7 +47,7 @@ class DecisionTreeClassifier(object):
         #y=x=np.insert(y,0,index,axis=1)
         
         root_node = self.induce_decision_tree(x,y)
-
+        print(root_node)
         
         # set a flag so that we know that the classifier has been trained
         self.is_trained = True
@@ -58,23 +58,35 @@ class DecisionTreeClassifier(object):
     
     def induce_decision_tree(self,x,y):
         
+
         #Check whether they all equal the same thing
         labels = np.unique(y)
         length = len(labels)
         if length == 1:
-            letter = self.terminal_leaf(y)
-            node = letter
-            return
+            return labels[0]
         
-        
-        
+        #Nothing in the data set
+        if len(x) == 0:
+            return None
+
+        #print("here")
         node = self.find_best_node(x,y)
+        #print(node)
         child_1,child_2 = self.split_dataset(node)
-                
+        #dont need the data after it is split
+        del(node["data"])
+        
+        
+        if(len(child_1["attributes"]) == 0 or len(child_2["attributes"]) == 0):
+            whole_set = np.concatenate((child_1["outcomes"],child_2["outcomes"]), axis=0)
+            letter = self.terminal_leaf(whole_set)
+            return letter
+        
+
         #Recursively call the function on the split dataset
-        #node["left"] = self.induce_decision_tree(child_1["attributes"],child_1["outcomes"])
-        #node["right"] = self.induce_decision_tree(child_2["attributes"],child_2["outcomes"])
-    
+        node["left"] = self.induce_decision_tree(child_1["attributes"],child_1["outcomes"])
+        node["right"] = self.induce_decision_tree(child_2["attributes"],child_2["outcomes"])
+        
         return node
         
     #Finds the propabilty of the class lables in the data set 
@@ -136,60 +148,61 @@ class DecisionTreeClassifier(object):
         stored_col = 0
         stored_value = 0
         stored_attribute = 0
-        split_value = 5
+        #split_value = 5
 
         for attribute in range(0,width):
             
-            subset_1_x = []
-            subset_1_y = []
-            subset_2_x = []
-            subset_2_y = []
+            for split_value in range(1,16):
             
-            for row in range(1,length):
+                subset_1_x = []
+                subset_1_y = []
+                subset_2_x = []
+                subset_2_y = []
                 
-                if x[row][attribute] < 5:
+                for row in range(1,length):
                     
-                    subset_1_x.append(x[row][attribute])
-                    subset_1_y.append(y[row][0])
+                    if x[row][attribute] < split_value:
+                        
+                        subset_1_x.append(x[row][attribute])
+                        subset_1_y.append(y[row][0])
+                    else:
+                        subset_2_x.append(x[row][attribute])
+                        subset_2_y.append(y[row][0])
+
+                outcomes_1 = np.unique(subset_1_y)
+                outcomes_2 = np.unique(subset_2_y)
+
+                #get the probabliltys of each set
+                subset_1_prob = self.find_probabilitys(subset_1_x,subset_1_y,outcomes_1,len(subset_1_x))
+                subset_2_prob = self.find_probabilitys(subset_2_x,subset_2_y,outcomes_2,len(subset_2_y))
+                if len(subset_1_prob) != 0:
+                    #get entropys of each set
+                    subset_1_entropy = self.find_entropy(outcomes_1,subset_1_prob)
                 else:
-                    subset_2_x.append(x[row][attribute])
-                    subset_2_y.append(y[row][0])
-
-            outcomes_1 = np.unique(subset_1_y)
-            outcomes_2 = np.unique(subset_2_y)
-
-    
-            #get the probabliltys of each set
-            subset_1_prob = self.find_probabilitys(subset_1_x,subset_1_y,outcomes_1,len(subset_1_x))
-            subset_2_prob = self.find_probabilitys(subset_2_x,subset_2_y,outcomes_2,len(subset_2_y))
-            if len(subset_1_prob) != 0:
-                #get entropys of each set
-                subset_1_entropy = self.find_entropy(outcomes_1,subset_1_prob)
-            else:
-                subset_1_entropy = 0
-            
-            if len(subset_2_prob) != 0:    
-                subset_2_entropy = self.find_entropy(outcomes_2,subset_2_prob)
-            else:
-                subset_2_entropy = 0
-
-            subset_1_entropy_normalised = subset_1_entropy * len(subset_1_x)/length
-            subset_2_entropy_normalised = subset_2_entropy * len(subset_2_x)/length
-
-            #get total entropy
-            total_entropy = subset_1_entropy_normalised + subset_2_entropy_normalised
-            
-            #get gain
-            gain = root_entropy - total_entropy
-
-            #check whether it is bigger than the previous
-            if(gain > previous_gain):
-                stored_attribute = attribute
-                stored_value = split_value 
+                    subset_1_entropy = 0
                 
-                # if not keep going 
-                # if so store the row and collumn and keep going
-                previous_gain = gain
+                if len(subset_2_prob) != 0:    
+                    subset_2_entropy = self.find_entropy(outcomes_2,subset_2_prob)
+                else:
+                    subset_2_entropy = 0
+
+                subset_1_entropy_normalised = subset_1_entropy * len(subset_1_x)/length
+                subset_2_entropy_normalised = subset_2_entropy * len(subset_2_x)/length
+
+                #get total entropy
+                total_entropy = subset_1_entropy_normalised + subset_2_entropy_normalised
+                
+                #get gain
+                gain = root_entropy - total_entropy
+
+                #check whether it is bigger than the previous
+                if(gain > previous_gain):
+                    stored_attribute = attribute
+                    stored_value = split_value 
+                    
+                    # if not keep going 
+                    # if so store the row and collumn and keep going
+                    previous_gain = gain
 
         #get the data into the node here
         data = {"attributes":x,"outcomes":y}
