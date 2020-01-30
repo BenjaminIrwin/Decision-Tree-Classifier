@@ -44,6 +44,9 @@ if __name__ == "__main__":
         ])
     #predictions = classifier.predict(x)
     predictions = classifier.predict(x_test)
+
+    #test of accuracy
+
     
     
 

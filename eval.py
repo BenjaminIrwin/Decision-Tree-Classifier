@@ -55,7 +55,7 @@ class Evaluator(object):
         
         
         return confusion
-    
+
     
     def accuracy(self, confusion):
         """ Computes the accuracy given a confusion matrix.
@@ -71,114 +71,97 @@ class Evaluator(object):
         float
             The accuracy (between 0.0 to 1.0 inclusive)
         """
-        
+
         # feel free to remove this
-        accuracy = 0.0
-        
-        #######################################################################
-        #                 ** TASK 3.2: COMPLETE THIS METHOD **
-        #######################################################################
+        true_total = 0.0
+        num_predictions = self.count_predictions(confusion)
+
+        for i in range(confusion.shape[0])
+            true_total += confusion[i, i]
+
+         accuracy = true_total/num_predictions
         
         return accuracy
-        
-    
+
+    def count_predictions(self, confusion):
+
+        total = 0
+        for i in range(confusion.shape[0]):
+            for j in range(confusion.shape[1]):
+                total += confusion[i, j]
+
+        return total
+
+    def macro_average(self, evaluate):
+        total = 0;
+        for i in range(len(evaluate)):
+            total += evaluate[i]
+
+        macro_av = total/len(evaluate)
+
+        return macro_av
+
     def precision(self, confusion):
-        """ Computes the precision score per class given a confusion matrix.
-        
-        Also returns the macro-averaged precision across classes.
-        
-        Parameters
-        ----------
-        confusion : np.array
-            The confusion matrix (C by C, where C is the number of classes).
-            Rows are ground truth per class, columns are predictions.
-        
-        Returns
-        -------
-        np.array
-            A C-dimensional numpy array, with the precision score for each
-            class in the same order as given in the confusion matrix.
-        float
-            The macro-averaged precision score across C classes.   
-        """
         
         # Initialise array to store precision for C classes
         p = np.zeros((len(confusion), ))
-        
-        #######################################################################
-        #                 ** TASK 3.3: COMPLETE THIS METHOD **
-        #######################################################################
 
-        # You will also need to change this        
-        macro_p = 0
+        true_positive_total = 0;
+        for i in range(confusion.shape[0]): #iterate thru each TruePositive (i.e. diagonally starting at confusion[0, 0]
+            true_positive_total = confusion[i, i]
+
+            false_positive_total = 0
+            for j in range(confusion.shape[0]): #After finding the TruePositive add up all the other values on its column
+                if j != i:
+                    false_positive_total += confusion[j, i]
+
+
+            precision = true_positive_total/true_positive_total + false_positive_total
+            p[i] = precision
+
+        macro_p = self.macro_average(p)
 
         return (p, macro_p)
     
     
     def recall(self, confusion):
-        """ Computes the recall score per class given a confusion matrix.
-        
-        Also returns the macro-averaged recall across classes.
-        
-        Parameters
-        ----------
-        confusion : np.array
-            The confusion matrix (C by C, where C is the number of classes).
-            Rows are ground truth per class, columns are predictions.
-        
-        Returns
-        -------
-        np.array
-            A C-dimensional numpy array, with the recall score for each
-            class in the same order as given in the confusion matrix.
-        
-        float
-            The macro-averaged recall score across C classes.   
-        """
-        
+
         # Initialise array to store recall for C classes
         r = np.zeros((len(confusion), ))
-        
-        #######################################################################
-        #                 ** TASK 3.4: COMPLETE THIS METHOD **
-        #######################################################################
-        
+
+
+        for i in range(len(confusion)):
+
+            total_true_positive = confusion[i, i]
+            total_false_negative = 0
+            for j in range(len(confusion)):
+                for k in range(len(confusion)):
+                    if j != k and k != i:
+                        total_false_negative += confusion[j, k]
+
+            recall = total_true_positive/(total_true_positive + total_false_negative)
+            r[i] = recall
+
+
         # You will also need to change this        
-        macro_r = 0
+        macro_r = self.macro_average(r)
         
-        return (r, macro_r)
+        return r, macro_r
     
     
     def f1_score(self, confusion):
-        """ Computes the f1 score per class given a confusion matrix.
-        
-        Also returns the macro-averaged f1-score across classes.
-        
-        Parameters
-        ----------
-        confusion : np.array
-            The confusion matrix (C by C, where C is the number of classes).
-            Rows are ground truth per class, columns are predictions.
-        
-        Returns
-        -------
-        np.array
-            A C-dimensional numpy array, with the f1 score for each
-            class in the same order as given in the confusion matrix.
-        
-        float
-            The macro-averaged f1 score across C classes.   
-        """
-        
+
         # Initialise array to store recall for C classes
         f = np.zeros((len(confusion), ))
-        
-        #######################################################################
-        #                 ** YOUR TASK: COMPLETE THIS METHOD **
-        #######################################################################
-        
-        # You will also need to change this        
-        macro_f = 0
+        r = self.recall(confusion)[0]
+        p = self.precision(confusion)[0]
+
+
+        for i in range(len(confusion)):
+            f1 = 2*((p[i]*r[i])/(p[i]+r[i]))
+            f[i] = f1
+
+        macro_f = self.macro_average(f)
         
         return (f, macro_f)
    
