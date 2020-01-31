@@ -6,9 +6,10 @@ from eval import Evaluator
 
 if __name__ == "__main__":
     
-    filename = "data/toy.txt"
+    filename = "data/train_sub.txt"
     data_set= np.loadtxt(filename,dtype=str,delimiter=',')
     length = len(data_set)
+
     line_length = len(data_set[0])
     x = np.zeros((length,line_length-1))
     y = np.zeros((length,1),dtype = str)
@@ -23,6 +24,7 @@ if __name__ == "__main__":
     alphabet = np.array(["A","C","E","G","O","Q"])
     alphabet_count = np.zeros((len(alphabet)))
     alphabet_proportions = np.zeros((len(alphabet)))
+
     for indx,letter in enumerate(alphabet):
         for index in range(0,length):
             if(letter == y[index]):
@@ -42,11 +44,13 @@ if __name__ == "__main__":
             [1,5,0], 
             [2,4,2]
         ])
+
+    x_test = x
     #predictions = classifier.predict(x)
     predictions = classifier.predict(x_test)
     eval = Evaluator()
     confusion = eval.confusion_matrix(predictions, y)
     
     
-    
-
+    print("printing the confusion matrix")
+    print(confusion)
