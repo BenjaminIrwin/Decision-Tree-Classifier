@@ -18,7 +18,7 @@ import numpy as np
 class Evaluator(object):
     """ Class to perform evaluation
     """
-    
+    ## WHAT DATA SHOULD IT BE ABLE TO HANDLE?
     def confusion_matrix(self, prediction, annotation, class_labels=None):
         """ Computes the confusion matrix.
         
@@ -45,20 +45,32 @@ class Evaluator(object):
         
         if not class_labels:
             class_labels = np.unique(annotation)
-        
+
         confusion = np.zeros((len(class_labels), len(class_labels)), dtype=np.int)
 
-        for index, i in enumerate(class_labels):
-            
-            
-            
+        print("printing prediction")
+        print(prediction)
+        print("printing annotation")
+        print(annotation)
+
+        print("printing empty confusion")
+        print(confusion)
+        
+        for i in range(0,len(annotation)):
+
+            row = np.where(class_labels == annotation[i,0])
+            column = np.where(class_labels == prediction[i])
+
+            if(row[0].size!= 0 and column[0].size != 0):  
+                confusion[row[0], column[0]] += 1
         
         
         return confusion
 
     
     def accuracy(self, confusion):
-        """ Computes the accuracy given a confusion matrix.
+        """
+         Computes the accuracy given a confusion matrix.
         
         Parameters
         ----------
