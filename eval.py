@@ -103,7 +103,9 @@ class Evaluator(object):
         """
         
         # Initialise array to store precision for C classes
-        p = np.zeros((len(confusion), ))
+        p = np.zeros((len(confusion),))
+        
+        
         
         #######################################################################
         #                 ** TASK 3.3: COMPLETE THIS METHOD **
