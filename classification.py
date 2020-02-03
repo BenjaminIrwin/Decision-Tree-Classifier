@@ -193,10 +193,10 @@ class DecisionTreeClassifier(object):
 
         for attribute in range(0, width):
 
-            minimum_attribute_value = np.amin(x[:, attribute])
-            maximum_attribute_value = np.amax(x[:, attribute])
+            minimum_attribute_value = int(np.amin(x[:, attribute]))
+            maximum_attribute_value = int(np.amax(x[:, attribute]))
 
-            for split_value in range(minimum_attribute_value, maximum_attribute_value + 1):
+            for split_value in range(minimum_attribute_value, maximum_attribute_value+1):
 
                 subset_1_x = []
                 subset_1_y = []
