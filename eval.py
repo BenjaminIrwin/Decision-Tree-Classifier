@@ -47,14 +47,6 @@ class Evaluator(object):
 
         confusion = np.zeros((len(class_labels), len(class_labels)), dtype=np.int)
 
-        print("printing prediction")
-        print(prediction)
-        print("printing annotation")
-        print(annotation)
-
-        print("printing empty confusion")
-        print(confusion)
-
         for i in range(0, len(annotation)):
 
             row = np.where(class_labels == annotation[i])
@@ -62,6 +54,8 @@ class Evaluator(object):
 
             if (row[0].size != 0 and column[0].size != 0):
                 confusion[row[0], column[0]] += 1
+
+        print(confusion)
 
         return confusion
 

@@ -5,11 +5,9 @@ from classification import DecisionTreeClassifier
 from eval import Evaluator
 
 def data_split(x, y, k):
-    
+
     # split the data in k parts
     xpart = x.split(k)
-    #xpart = np.split(x,k);
-    #ypart = np.split(y,k) ;
     ypart = y.split(k)
 
     return np.array(xpart), np.array(ypart)
@@ -73,16 +71,12 @@ if __name__ == "__main__":
     print(left_height)
     print(right_height)
     classifier.print_tree(tree)
-    
-    
+
     # Check whether the confusion matrix works
-   #predictions = classifier.predict(x_test)
-    #eval = Evaluator()
-    #confusion = eval.confusion_matrix(predictions, y_test)
+    predictions = classifier.predict(x_test)
+    eval = Evaluator()
+    confusion = eval.confusion_matrix(predictions, y_test)
 
     # Check whether cross-validation works
-    #tup = cross_validation(x, y,2)
-
-
-
-
+    tup = cross_validation(x,y,3)
+    print(tup)
