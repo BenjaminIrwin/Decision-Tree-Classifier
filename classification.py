@@ -422,7 +422,7 @@ class DecisionTreeClassifier(object):
             string object of label prediction
         """
         #if leaf found return label str
-        if isinstance(tree, str):
+        if not isinstance(tree, dict):
             return tree
 
         # Check the required attribute is greater or less than the node split
