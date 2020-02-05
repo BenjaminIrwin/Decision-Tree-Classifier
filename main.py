@@ -5,15 +5,18 @@ from classification import DecisionTreeClassifier
 from eval import Evaluator
 
 def data_split(x, y, k):
+    
     # split the data in k parts
-    xpart = x.split(k);
-    ypart = y.split(k);
+    xpart = x.split(k)
+    #xpart = np.split(x,k);
+    #ypart = np.split(y,k) ;
+    ypart = y.split(k)
 
-    return xpart, ypart
+    return np.array(xpart), np.array(ypart)
 
 
 def cross_validation(x, y, k):
-    xpart, ypart = data_split(k)
+    xpart, ypart = data_split(x,y,k)
     accuracy = np.zeros(k)
 
     for i in range(0, k):
@@ -63,20 +66,22 @@ if __name__ == "__main__":
 
     #filename = "data/test.txt"
     #x_test,y_test = classifier.load_data(filename)
-    predictions = classifier.predict(x_test)
-
-
-    eval = Evaluator()
-    confusion = eval.confusion_matrix(predictions, y)
-
+    tree = classifier.root_node
+    print(tree)
+    left_height = classifier.node_height(tree["left"])
+    right_height = classifier.node_height(tree["right"])
+    print(left_height)
+    print(right_height)
+    classifier.print_tree(tree)
+    
+    
     # Check whether the confusion matrix works
-    x_test = x
-    predictions = classifier.predict(x_test)
-    eval = Evaluator()
-    confusion = eval.confusion_matrix(predictions, y)
+   #predictions = classifier.predict(x_test)
+    #eval = Evaluator()
+    #confusion = eval.confusion_matrix(predictions, y_test)
 
     # Check whether cross-validation works
-    tup = cross_validation(x, y,2)
+    #tup = cross_validation(x, y,2)
 
 
 
