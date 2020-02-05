@@ -11,7 +11,7 @@ import numpy as np
 from numpy import ma
 import matplotlib.pyplot as plt
 import matplotlib.patches as pp
-import matplotlib.collections as mcollections
+from matplotlib.collections import PatchCollection
 
 
 class DecisionTreeClassifier(object):
@@ -434,194 +434,94 @@ class DecisionTreeClassifier(object):
 
 
 
-# ---------------------------------------
-    """      
-    def print_tree(self):
+
+    
+    def node_height(self,node):
         
-        tree = self.root_node
-        print(tree)
+        if not isinstance(node, dict):
+            return 0
         
+        return 1 + max(self.node_height(node["left"]),self.node_height(node["right"]))
+
+                                         
+    
+    def print_tree(self,tree):
         
         #Attrubute column labels
         attributes = {0:"x-box",1:"y-box",2:"width",3:"high",
                       4:"onpix",5:"x-bar",6:"y-bar",7:"x2bar",
                       8:"y2bar",9:"xybar",10:"x2ybr",11:"xy2br",12:"x-ege",13:"xegvy",14:"y-ege",15:"yegvx"}
         
-        #recursive_print(tree,attributes,0,patches_2)
-        annotation = "depth:"+str(0) + " " + attributes[tree["attribute"]] + "<" + str(tree["value"])
+        fig,ax = plt.subplots(nrows = 1,ncols=1)
+        ax.xaxis.set_visible(False)
+        ax.yaxis.set_visible(False)
+        y = 1000
+        x1 = 0
+        x2 = 1000
+        mid_x = (x1 + x2)/2
+        height = 50
+        width = 200
+        depth = 0
         
-        #Code for the root
-        fig = plt.figure()
-        ax = fig.add_subplot(1, 1, 1)
-        rect = plt.Rectangle((0.45, 0.9), 0.1, 0.1, color='k', alpha=0.3)
-        rx, ry = rect.get_xy()
-        center_x = rx + rect.get_width()/2.0
-        center_y = ry + rect.get_height()/2.0
+        patches = []
+        patches.append(pp.Rectangle((mid_x-width/2,y-height),width,height,color = 'blue'))
+        annotation = "Node:\nDepth:"+str(0) + "\nAttribute Split: " + attributes[tree["attribute"]] + "<" + str(tree["value"]) + "\nInformation Gain:"+str(np.round(tree["gain"],3))
+        center_x = mid_x #(mid_x-width/2)
+        center_y = y - height/2.0
+        ax.annotate(annotation, (center_x,center_y), color='white', weight='bold',fontsize=6, ha='center', va='center')
         
-        rectangles = []
+        self.recursive_print(tree["left"],mid_x,x1,mid_x,y-2*height,attributes,depth+1,patches,ax)
+        self.recursive_print(tree["right"],mid_x,mid_x,x2,y-2*height,attributes,depth+1,patches,ax)
         
-        rectangles.append(rect)
+        ax.add_collection(PatchCollection(patches,match_original=True))
+        ax.set_xlim((0,1000))
+        ax.set_ylim((0,1000))
+        ax.autoscale()
+        plt.show()                     
+        
+        
+    def recursive_print(self,node,parent_center_x,x1,x2,y,attributes,depth,patches,ax):
+        
+        mid_x = (x1 + x2)/2
+        height = 50
+        width = 200
+
+        if not isinstance(node, dict):
+            #print a leaf node (different colour
     
-        parent_coordinates = {"xy":(rx,ry),"center_x":center_x,"center_y":center_x}
+            patches.append(pp.Rectangle((mid_x-width/2,y-height),width,height,color = 'black'))
+            annotation = "Leaf Node \nLabel = " + str(node)
+            center_x = mid_x
+            center_y = y - height/2.0
+            ax.annotate(annotation, (center_x, center_y), color='white', weight='bold',fontsize=6, ha='center', va='center')
+            plt.plot([parent_center_x,mid_x],[y+height,y],'black',linestyle=':',marker='')
+            return 
         
-        left_details = []
-        right_details = []
-        annotation = {}
-        center =  {}
-        patches_left = []
-        patches_right = []
-        
-        #left branch
-        #self.recursive_print(tree,attributes,1,parent_coordinates,patches_left,left_details)
-        
-        #Right branch
-        #self.recursive_print(tree,attributes,1,parent_coordinates,patches_right,right_details)
-    
-        ax.annotate(annotation,(center_x, center_y), color='w', weight='bold',fontsize=6, ha='center', va='center')
-        
-        for r in rectangles:
-            ax.add_artist(rectangles[r])
-            rx, ry = rectangles[r].get_xy()
-            cx = rx + rectangles[r].get_width()/2.0
-            cy = ry + rectangles[r].get_height()/2.0
-
-            ax.annotate(r, (cx, cy), color='w', weight='bold', 
-                fontsize=6, ha='center', va='center')
-     
-      
-        ax.add_patch(rect)
-
-        #ax.autoscale()
-
-        #rect =  pp.Rectangle((50,100),facecolor='b')
-        plt.show()
-        
-    def recursive_print(self,tree,attributes,depth,parent_coordinates,rectangles,details,left):
-        
-        if left == True:
-            center_x = parent_coordinates["xy"][0]
-            center_y = parent_coordinates["xy"][0] - (0.1+0.05)
-        
-        
-        if isinstance(tree,dict):
-        
-            annotation = "depth:"+str(0) + " " + attributes[tree["attribute"]] + "<" + str(tree["value"])
-            
-            rectangles.append(plt.Rectangle((0.45, 0.9), 0.1, 0.1, color='k', alpha=0.3)
-                              
-            center_x = parent_coordinates["xy"][0] #center of the previous
-            center_y = parent_coordinates["xy"][0] - 0.1+0.05
-            details = {"annotation":annotation,center_x:
-                           
         else:
             
-            annotation = "depth:"+str(0) + " " + attributes[tree["attribute"]] + "<" + str(tree["value"])
-            rect = plt.Rectangle((0.45, 0.9), 0.1, 0.1, color='k', alpha=0.3)
-            
-            
-            
+            patches.append(pp.Rectangle((mid_x-width/2,y-height),width,height,color = 'blue'))
+            annotation = "Node:\nDepth:"+str(depth) + "\nAttribute Split: " + attributes[node["attribute"]] + "<" + str(node["value"])+ "\nInformation Gain:"+str(np.round(node["gain"],3))
+            center_x = mid_x
+            center_y = y - height/2.0
+            ax.annotate(annotation, (center_x,center_y), color='white', weight='bold',fontsize=6, ha='center', va='center')
+            plt.plot([parent_center_x,mid_x],[y+height,y],'black',linestyle=':',marker='')
         
+        #Maximum depth to print out
+        if depth ==3:
+            return
+    
+        #else do all this stuff
+        annotation = "depth:"+str(0) + " " + attributes[node["attribute"]] + "<" + str(node["value"])
         
-            
-            
-            #rect = Rectangle((15,10),10,, angle=0.0,
-            
-            
+        left_height = self.node_height(node["left"]) + 1
+        right_height = self.node_height(node["right"]) + 1
+        weight = left_height/(left_height + right_height)
         
-        """
-    """
-    def find_best_node_simple(self, x, y):
-
-        length, width = np.shape(x)
-        class_labels = np.unique(y)
-
-        class_labels_probabilty = self.find_probabilities(y)
-
-        root_entropy = self.find_entropy(class_labels, class_labels_probabilty)
-        previous_gain = 0
-        stored_col = 0
-        stored_value = 0
-        stored_attribute = 0
-        split_value = 0
-
-        for attribute in range(0, 1):
-
-            subset_1_x = []
-            subset_1_y = []
-            subset_2_x = []
-            subset_2_y = []
-
-            self.sort_dataset(x, y, attribute)
-
-            for row in range(1, length):
-
-                # If the attrbute and outcomes are different
-                if x[row][attribute] != x[row - 1][attribute] and y[row][0] != y[row - 1][0]:
-                    split_value = x[row][attribute]
-                    subset_1_x.append(x[:row][:])
-                    subset_1_y.append(y[:row][0])
-                    subset_2_x.append(x[row][:])
-                    subset_2_y.append(y[row][0])
-
-            outcomes_1 = np.unique(subset_1_y)
-            outcomes_2 = np.unique(subset_2_y)
-
-            # get the probabliltys of each set
-            subset_1_prob = self.find_probabilities(subset_1_y)
-            subset_2_prob = self.find_probabilities(subset_2_y)
-
-            if len(subset_1_prob) != 0:
-                # get entropys of each set
-                subset_1_entropy = self.find_entropy(outcomes_1, subset_1_prob)
-            else:
-                subset_1_entropy = 0
-
-            if len(subset_2_prob) != 0:
-                subset_2_entropy = self.find_entropy(outcomes_2, subset_2_prob)
-            else:
-                subset_2_entropy = 0
-
-            subset_1_entropy_normalised = subset_1_entropy * len(subset_1_x) / length
-            subset_2_entropy_normalised = subset_2_entropy * len(subset_2_x) / length
-
-            # get total entropy
-            total_entropy = subset_1_entropy_normalised + subset_2_entropy_normalised
-
-            # get gain
-            gain = root_entropy - total_entropy
-
-            # check whether it is bigger than the previous
-            if (gain > previous_gain):
-                stored_attribute = attribute
-                stored_value = split_value
-                stored_gain = gain
-                # if not keep going 
-                # if so store the row and collumn and keep going
-                previous_gain = gain
-
-        # get the data into the node here
-        data = {"attributes": x, "outcomes": y}
-
-        # returns the node
-        return {"value": stored_value, "attribute": stored_attribute, "gain": stored_gain, "data": data, "left": None,
-                "right": None}
-
-    def sort_dataset(self, x, y, col):
-
-        new_x = np.zeros((len(x), len(x[0, :])))
-        new_y = np.zeros((len(y), 1))
-
-        length = len(y)
-        for j in range(0, length):
-            for j_2 in range(j + 1, length):
-
-                if x[j_2][col] < x[j][col]:
-                    # swapping
-                    temp = np.copy(x[j_2][:], order='K')
-                    temp_y = np.copy(y[j_2], order='K')
-
-                    x[j_2][0:] = x[j][0:]
-                    x[j][0:] = temp[0:]
-                    y[j_2] = y[j]
-                    y[j] = temp_y
-"""
+        weighted_x = x1 + weight*(x2-x1)
+    
+        self.recursive_print(node["left"],mid_x,x1,weighted_x,y-2*height,attributes,depth+1,patches,ax)
+        self.recursive_print(node["right"],mid_x,weighted_x,x2,y-2*height,attributes,depth+1,patches,ax)
+        
+    
+  
+       
