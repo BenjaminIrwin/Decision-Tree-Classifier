@@ -17,7 +17,7 @@ import matplotlib.collections as mcollections
 class DecisionTreeClassifier(object):
     """
     A decision tree classifier
-    
+ 
     Attributes
     ----------
     is_trained : bool
@@ -34,26 +34,50 @@ class DecisionTreeClassifier(object):
 
     def __init__(self):
         self.is_trained = False
+        self.root_node = {}
 
     def load_data(self, filename):
-
+        """
+        Function to load data from file
+        Args:
+            filename (str) - name of .txt file you are loading data from
+        Output:
+            (x, y) (tuple) - x: 2D array of training data where each row
+            corresponds to a different sample and each column corresponds to a
+            different attribute.
+                            y: 1D array where each index corresponds to the
+            ground truth label of the sample x[index][]
+        """
+        #load data to single 2D array
         data_set = np.loadtxt(filename, dtype=str, delimiter=',')
-        length = len(data_set)
-        line_length = len(data_set[0])
-        x = np.zeros((length, line_length - 1))
-        y = np.zeros((length, 1), dtype=str)
-
-        for j in range(0, length):
-            for i in range(0, line_length):
-                if i < (line_length - 1):
-                    x[j][i] = data_set[j][i]
+        num_samp = len(data_set) #number of sample_is
+        num_att = len(data_set[0]) #number of attributes
+        
+        #create attribute and label arrays filled with zeros
+        x = np.zeros((num_samp, num_att - 1))
+        y = np.zeros((num_samp,1), dtype=str)
+        
+        #fill arrays with correct values
+        for sample_i in range(num_samp):
+            for attribute_i in range(num_att):
+                if attribute_i < (num_att - 1):
+                    x[sample_i][attribute_i] = data_set[sample_i][attribute_i]
                 else:
-                    y[j][0] = data_set[j][i]
+                    y[sample_i] = data_set[sample_i][attribute_i]
         return x, y
 
 
-    def evaluate_input(self,x,y):
-
+    def evaluate_input(self, x, y):
+        """
+        Function to evaluate data loaded from file
+        Args:
+            x (2D array) - 2D array of training data where each row
+            corresponds to a different sample and each column corresponds to a
+            different attribute.
+            y (1D array) -  where each index corresponds to the
+            ground truth label of the sample x[index][]
+        """
+        #these can be shown graphically
         alphabet, count = np.unique(y, return_counts=True)
         alphabet_count = np.zeros((len(alphabet)))
         alphabet_proportions_1 = count / len(y)
@@ -74,7 +98,7 @@ class DecisionTreeClassifier(object):
         print(maximum_attribute_value)
         print("attribute ranges:")
         print(attribute_ranges_1)
-        '''''
+        '''
         filename = "data/train_noisy.txt"
         classifier = DecisionTreeClassifier()
         x,y = classifier.load_data(filename)
@@ -109,158 +133,228 @@ class DecisionTreeClassifier(object):
         '''
 
     def train(self, x, y):
+        """
+        Function to creat decision tree based on training data in x, y
+        Args:
+            x (2D array) - 2D array of training data where each row
+            corresponds to a different sample and each column corresponds to a
+            different attribute.
+            y (1D array) -  where each index corresponds to the
+            ground truth label of the sample x[index][]
 
+        Output:
+            self
+        """
         # Make sure that x and y have the same number of instances
         assert x.shape[0] == len(y), \
             "Training failed. x and y must have the same number of instances."
 
         self.root_node = self.induce_decision_tree(x, y)
         # self.simple_node = self.induce_decision_tree(x,y,True)
+        
         print(self.root_node)
         # set a flag so that we know that the classifier has been trained
         self.is_trained = True
 
         return self
 
-    def induce_decision_tree(self, x, y, optimsed=False):
+    def induce_decision_tree(self, x, y):
+        """
+        Recursive function to create decision tree based on training data
+        in x, y
+        Args:
+            x (2D array) - 2D array of training data where each row
+            corresponds to a different sample and each column corresponds to a
+            different attribute.
+            y (1D array) -  where each index corresponds to the
+            ground truth label of the sample x[index][]
+        Output:
+            node (dict) - root node of decision tree with child nodes stored
+            under "left" and "right" keys. The leaf nodes contain a string
+            corresponding to the label.
+        """
 
-        # Check whether they all equal the same thing
-        labels = np.unique(y)
-        length = len(labels)
+        labels = np.unique(y) #return array of unique labels
+        length = len(labels) #number of unique labels
+
+        """
+        When all data in x corresponds to 1 type of label, no further 
+        partitioning is needed. Hence return label as leaf node. 
+        """
         if length == 1:
             return labels[0]
 
         # Nothing in the data set
         if len(x) == 0:
+            print("induce_decision_tree Error: No sample data passed into "
+                  "function.")
             return None
 
-        if not optimsed:
-            node = self.find_best_node_ideal(x, y)
-        else:
-            node = self.find_best_node_simple(x, y)
+        #find best partition for node
+        node = self.find_best_node_ideal(x, y)
 
+        #divide data on found partition
         child_1, child_2 = self.split_dataset(node)
 
         # dont need the data after it is split
         del (node["data"])
 
+        """
+        When there are still multiple different types of labels in data but any
+        kind of division does not decrease entropy ('best' information gain 
+        with no division) a leaf node has been found -- terminate recursion
+        and choose most common label in data as leaf label.
+        """
         if len(child_1["attributes"]) == 0 or len(child_2["attributes"]) == 0:
-            whole_set = np.concatenate((child_1["outcomes"], child_2["outcomes"]), axis=0)
-            return self.terminal_leaf(whole_set)
+            #recombine array of labels (one will be empty)
+            whole_set = np.concatenate((child_1["labels"], child_2["labels"]))
+            #return most common label as terminal leaf node
+            return self.most_common_label(whole_set)
 
         # Recursively call the function on the split dataset
-        node["left"] = self.induce_decision_tree(child_1["attributes"], child_1["outcomes"], optimsed)
-        node["right"] = self.induce_decision_tree(child_2["attributes"], child_2["outcomes"], optimsed)
+        node["left"] = self.induce_decision_tree(child_1["attributes"],
+                                                 child_1["labels"])
+
+        node["right"] = self.induce_decision_tree(child_2["attributes"],
+                                                  child_2["labels"])
 
         return node
 
-    # Finds the propabilty of the class lables in the data set
-    def find_probabilitys(self, x, y, class_labels, length):
-
-        alphabet, alphabet_count = np.unique(y, return_counts=True)
-        alphabet_count = np.array(alphabet_count, dtype=float)
-
-        #Binary Classifcation
-        alphabet_probabilty = alphabet_count / length
-
-        return alphabet_probabilty
-
-    # Finds the entropy of the dataset
-    def find_entropy(self, class_labels, probablity_matrix):
-
-        information = np.zeros((len(class_labels)))
-        information = probablity_matrix * ma.log2(probablity_matrix)
-        information[information.mask] = 0
+    def find_total_entropy(self, y):
+        """
+        Function to find the total entropy in label array, y
+        Args:
+            y (1D array) -  where each index corresponds to the
+            ground truth label of the sample x[index][]
+        Output:
+            entropy (float) - calculated entropy
+        """
+        num_samples = len(y)
+        if num_samples == 0:
+            return 0
+        #find probabilities of each label
+        labels_unique, label_count = np.unique(y, return_counts=True)
+        label_probabilities = label_count / num_samples
+        #find entropy using probabilities
+        information = label_probabilities * np.log2(label_probabilities)
         entropy = -1 * np.sum(information)
         return entropy
 
-    def terminal_leaf(self, data_set):
+    def most_common_label(self, data_set):
+        """
+        Returns the most frequent value in 1D numpy array
+        Args:
+            data_set (1D array)
+        Output:
+           most common value in array
+        """
         labels, count = np.unique(data_set, return_counts=True)
         index = np.argmax(count)
         return data_set[index]
 
     def find_best_node_ideal(self, x, y):
-
-        length, width = np.shape(x)
-        class_labels = np.unique(y)
-
-        class_labels_probabilty = self.find_probabilitys(x, y, class_labels, length)
-
-        root_entropy = self.find_entropy(class_labels, class_labels_probabilty)
-        previous_gain = 0
+        """
+        Function to find the attribute and value on which a binary partition of
+        the data can be made to maximise information gain (entropy reduction)
+        Args:
+            x (2D array) - 2D array of training data where each row
+            corresponds to a different sample and each column corresponds to a
+            different attribute.
+            y (1D array) -  where each index corresponds to the
+            ground truth label of the sample x[index][]
+        Output:
+            node (dict) - dictionary contains information on partition,
+            including value and attribute to partition over.
+        """
         stored_value = 0
         stored_attribute = 0
+        best_gain = 0
 
-        for attribute in range(0, width):
+        num_samples, num_attributes = np.shape(x)
 
+        root_entropy = self.find_total_entropy(y)
+
+        for attribute in range(num_attributes):
+            """
+            iterate through each attribute to find which attribute to 
+            split data on --> find which attribute partition causes the
+            greatest information gain.
+            """
+            #find the min and max value of that attribute
             minimum_attribute_value = int(np.amin(x[:, attribute]))
             maximum_attribute_value = int(np.amax(x[:, attribute]))
 
-            for split_value in range(minimum_attribute_value, maximum_attribute_value+1):
-
+            for split_value in range(minimum_attribute_value,
+                                     maximum_attribute_value+1):
+                """
+                iterate through each possible divide of that attribute 
+                (where to halve data) to find what value of that attribute to 
+                split data on --> find which partition causes the greatest 
+                information gain.
+                """
+                #first half
                 subset_1_x = []
                 subset_1_y = []
+
+                #second half
                 subset_2_x = []
                 subset_2_y = []
 
-                for row in range(1, length):
+                # WHY DO YOU START FROM 1 HER
+                for row in range(num_samples):
 
+                    #perform separation of data into two halves
                     if x[row][attribute] < split_value:
-
                         subset_1_x.append(x[row][:])
-                        subset_1_y.append(y[row][0])
+                        subset_1_y.append(y[row])
                     else:
                         subset_2_x.append(x[row][:])
-                        subset_2_y.append(y[row][0])
+                        subset_2_y.append(y[row])
 
-                outcomes_1 = np.unique(subset_1_y)
-                outcomes_2 = np.unique(subset_2_y)
+                #find entropy of each half
+                subset_1_entropy = self.find_total_entropy(subset_1_y)
+                subset_2_entropy = self.find_total_entropy(subset_2_y)
 
-                # get the probabliltys of each set
-                subset_1_prob = self.find_probabilitys(subset_1_x, subset_1_y, outcomes_1, len(subset_1_x))
-                subset_2_prob = self.find_probabilitys(subset_2_x, subset_2_y, outcomes_2, len(subset_2_y))
-
-                if len(subset_1_prob) != 0:
-                    # get entropys of each set
-                    subset_1_entropy = self.find_entropy(outcomes_1, subset_1_prob)
-                else:
-                    subset_1_entropy = 0
-
-                if len(subset_2_prob) != 0:
-                    subset_2_entropy = self.find_entropy(outcomes_2, subset_2_prob)
-                else:
-                    subset_2_entropy = 0
-
-                subset_1_entropy_normalised = subset_1_entropy * len(subset_1_x) / length
-                subset_2_entropy_normalised = subset_2_entropy * len(subset_2_x) / length
+                #normalise entropy for each of sub datasets
+                subset_1_entropy_normalised = \
+                    subset_1_entropy * len(subset_1_x) / num_samples
+                subset_2_entropy_normalised = \
+                    subset_2_entropy * len(subset_2_x) / num_samples
 
                 # get total entropy
-                total_entropy = subset_1_entropy_normalised + subset_2_entropy_normalised
+                total_split_entropy = subset_1_entropy_normalised + \
+                                      subset_2_entropy_normalised
 
-                # get gain
-                gain = root_entropy - total_entropy
+                # get information gain
+                information_gain = root_entropy - total_split_entropy
 
                 # check whether it is bigger than the previous
-                if (gain > previous_gain):
+                if (information_gain > best_gain):
                     stored_attribute = attribute
                     stored_value = split_value
-                    stored_gain = gain
-                    # if not keep going 
-                    # if so store the row and collumn and keep going
-                    previous_gain = gain
+                    best_gain = information_gain
 
         # get the data into the node here
-        data = {"attributes": x, "outcomes": y}
+        data = {"attributes": x, "labels": y}
 
         # returns the node
-        return {"value": stored_value, "attribute": stored_attribute, "gain": stored_gain, "data": data, "left": None,
-                "right": None}
+        return {"value": stored_value, "attribute": stored_attribute,
+               "gain": best_gain, "data": data, "left": None,\
+                    "right": None}
 
     def split_dataset(self, node):
-
+        """
+        Function to split the data in a node according to partition defined by
+        find_best_node_ideal
+        Args:
+            node (dict) - node which details how to split data
+        Output:
+            (left, right) (tuple) - dataset split into two halves as defined by
+            node["attribute"] and node["value"]
+        """
         dataset = node["data"]
         x = dataset["attributes"]
-        y = dataset["outcomes"]
+        y = dataset["labels"]
         attribute = node["attribute"]
         split_value = node["value"]
         left_x = []
@@ -268,7 +362,7 @@ class DecisionTreeClassifier(object):
         left_y = []
         right_y = []
 
-        for row in range(0, len(x)):
+        for row in range(len(x)):
 
             if x[row][attribute] < split_value:
                 left_x.append(x[row][:])
@@ -277,13 +371,12 @@ class DecisionTreeClassifier(object):
                 right_x.append(x[row][:])
                 right_y.append(y[row][0])
 
-        left = {"attributes": np.array(left_x), "outcomes": np.array(left_y)}
-        right = {"attributes": np.array(right_x), "outcomes": np.array(right_y)}
+        left = {"attributes": np.array(left_x), "labels": np.array(left_y)}
+        right = {"attributes": np.array(right_x), "labels": np.array(right_y)}
 
         return left, right
 
     def predict(self, x):
-
         """ Predicts a set of samples using the trained DecisionTreeClassifier.
         
         Assumes that the DecisionTreeClassifier has already been trained.
@@ -303,36 +396,45 @@ class DecisionTreeClassifier(object):
 
         # make sure that classifier has been trained before predicting
         if not self.is_trained:
-            raise Exception("Decision Tree classifier has not yet been trained.")
+            raise Exception("Decision Tree classifier has not yet been"
+                            " trained.")
 
         # set up empty N-dimensional vector to store predicted labels 
-        # feel free to change this if needed
-        predictions = np.zeros((x.shape[0],), dtype=np.object)
+        predictions = np.zeros((x.shape[0],), dtype=str)
         # load the classifier
         root_of_tree = self.root_node
 
-        for j in range(0, len(x)):
+        for j in range(len(x)):
             predictions[j] = self.recursive_predict(root_of_tree, x[j][:])
 
         # remember to change this if you rename the variable
         return predictions
 
     def recursive_predict(self, tree, attributes):
+        """
+        Function to predict the label of a sample based on its attributes
+        Args:
+            tree (dict) - trained decision tree
+            attributes (2D array) - 2D array of test data where each row
+            corresponds to a different sample and each column corresponds to a
+            different attribute.
+        Output:
+            string object of label prediction
+        """
+        #if leaf found return label str
+        if isinstance(tree, str):
+            return tree
 
-        # Check the required attribute is greater or less than the node
-        if attributes[tree["attribute"]] < tree["value"]:
-
-            if isinstance(tree["left"], dict):
-                return self.recursive_predict(tree["left"], attributes)
-            else:
-                return tree["left"]
-
+        # Check the required attribute is greater or less than the node split
+        # then recursively call function on tree from child node.
+        elif attributes[tree["attribute"]] < tree["value"]:
+            return self.recursive_predict(tree["left"], attributes)
         else:
-            if isinstance(tree["right"], dict):
-                return self.recursive_predict(tree["right"], attributes)
-            else:
-                return tree["right"]
+            return self.recursive_predict(tree["right"], attributes)
 
+
+
+# ---------------------------------------
     """      
     def print_tree(self):
         
@@ -427,13 +529,13 @@ class DecisionTreeClassifier(object):
             
         
         """
-
+    """
     def find_best_node_simple(self, x, y):
 
         length, width = np.shape(x)
         class_labels = np.unique(y)
 
-        class_labels_probabilty = self.find_probabilitys(x, y, class_labels, length)
+        class_labels_probabilty = self.find_probabilities(y)
 
         root_entropy = self.find_entropy(class_labels, class_labels_probabilty)
         previous_gain = 0
@@ -465,8 +567,8 @@ class DecisionTreeClassifier(object):
             outcomes_2 = np.unique(subset_2_y)
 
             # get the probabliltys of each set
-            subset_1_prob = self.find_probabilitys(subset_1_x, subset_1_y, outcomes_1, len(subset_1_x))
-            subset_2_prob = self.find_probabilitys(subset_2_x, subset_2_y, outcomes_2, len(subset_2_y))
+            subset_1_prob = self.find_probabilities(subset_1_y)
+            subset_2_prob = self.find_probabilities(subset_2_y)
 
             if len(subset_1_prob) != 0:
                 # get entropys of each set
@@ -522,3 +624,4 @@ class DecisionTreeClassifier(object):
                     x[j][0:] = temp[0:]
                     y[j_2] = y[j]
                     y[j] = temp_y
+"""
