@@ -54,6 +54,7 @@ class Evaluator(object):
 
         print("printing empty confusion")
         print(confusion)
+        print(prediction)
 
         for i in range(0, len(annotation)):
 
