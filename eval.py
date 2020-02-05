@@ -47,7 +47,8 @@ class Evaluator(object):
 
         confusion = np.zeros((len(class_labels), len(class_labels)), dtype=np.int)
 
-        for i in range(len(annotation)):
+
+        for i in range(0, len(annotation)):
 
             row = np.where(class_labels == annotation[i])
             column = np.where(class_labels == prediction[i])

@@ -1,2 +1,5 @@
 main.pyc
 eval.pyc
+.idea*
+__pycache__*
+
