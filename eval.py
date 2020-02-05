@@ -47,7 +47,7 @@ class Evaluator(object):
 
         confusion = np.zeros((len(class_labels), len(class_labels)), dtype=np.int)
 
-        for i in range(0, len(annotation)):
+        for i in range(len(annotation)):
 
             row = np.where(class_labels == annotation[i])
             column = np.where(class_labels == prediction[i])
@@ -55,7 +55,8 @@ class Evaluator(object):
             if (row[0].size != 0 and column[0].size != 0):
                 confusion[row[0], column[0]] += 1
 
-        print(confusion)
+ #        print("confusion:")
+ #       print(confusion)
 
         return confusion
 
@@ -81,6 +82,9 @@ class Evaluator(object):
         for i in range(confusion.shape[0]):
             true_total += confusion[i, i]
 
+        if(num_predictions == 0):
+            return 0
+        
         accuracy = true_total / num_predictions
 
         return accuracy

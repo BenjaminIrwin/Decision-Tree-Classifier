@@ -4,34 +4,69 @@ import numpy as np
 from classification import DecisionTreeClassifier
 from eval import Evaluator
 
+"""
 def data_split(x, y, k):
 
     # split the data in k parts
-    xpart = x.split(k)
-    ypart = y.split(k)
-
+    xpart = np.split(x,k)
+    ypart = np.split(y,k)
+        
     return np.array(xpart), np.array(ypart)
 
 
 def cross_validation(x, y, k):
+
+
+    print(x)
+    print(y)
+    data = np.concatenate((x, y.T), axis=1)
+    np.random.shuffle(data)
+    print(data.shape)
     xpart, ypart = data_split(x,y,k)
     accuracy = np.zeros(k)
 
-    for i in range(0, k):
+"""
 
+def data_split(x, y, k):
+
+    #concatenate and randomise data
+    data = np.array(np.concatenate((x, y), axis=1))
+    np.random.shuffle(data)
+    data = np.array(np.split(data,k))
+
+    print(data.shape)
+    #split and return
+    xpart = np.array(data[:,:,:-1],dtype=int)
+    ypart = np.array(data[:,:,-1],dtype=str)
+
+    return xpart, ypart
+
+
+def cross_validation(x, y, k):    
+    
+    #print(data.shape)
+    xpart, ypart = data_split(x,y,k)
+    accuracy = np.zeros(k)
+
+
+    for i in range(k):
+        
         # split data correctly
         xval = xpart[i]
         yval = ypart[i]
-        xtrain = np.delete(xpart, i)
-        ytrain = np.delete(ypart, i)
+        xtrain = np.delete(xpart,i,0)[0]
+        ytrain = np.delete(ypart,i,0)[0]
 
         # train on training slice
         classifier = DecisionTreeClassifier()
-        classifier = classifier.train(xpart, ypart)
+        classifier = classifier.train(xtrain, ytrain)
+
+        #predict for test class
+        predictions = classifier.predict(xval)
 
         # validate using statistics
         eval = Evaluator()
-        confusion = eval.confusion_matrix(predictions, y)
+        confusion = eval.confusion_matrix(predictions, yval)
         accuracy[i] = eval.accuracy(confusion)
 
         # store the maximum classifier
@@ -44,11 +79,13 @@ def cross_validation(x, y, k):
 
 if __name__ == "__main__":
 
-    filename = "data/toy.txt"
+    filename = "data/train_full.txt"
     classifier = DecisionTreeClassifier()
     x,y = classifier.load_data(filename)
-    classifier.evaluate_input(x,y)
 
+   
+    classifier.evaluate_input(x,y)
+    
     print("Training the decision tree...")
     classifier = classifier.train(x,y)
 
@@ -62,21 +99,23 @@ if __name__ == "__main__":
 
     y_test = np.array(["A", "A", "C", "C"])
 
-    #filename = "data/test.txt"
-    #x_test,y_test = classifier.load_data(filename)
     tree = classifier.root_node
-    print(tree)
+   # print(tree)
     left_height = classifier.node_height(tree["left"])
     right_height = classifier.node_height(tree["right"])
-    print(left_height)
-    print(right_height)
-    classifier.print_tree(tree)
-
+    #print(left_height)
+    #print(right_height)
+    
+ 
+    #print(y_test)
+    #print(predictions)
     # Check whether the confusion matrix works
-    predictions = classifier.predict(x_test)
-    eval = Evaluator()
-    confusion = eval.confusion_matrix(predictions, y_test)
-
+    #predictions = classifier.predict(x_test)
+    #print("xtest: ", x_test)
+    #eval = Evaluator()
+    #confusion = eval.confusion_matrix(predictions, y_test)
     # Check whether cross-validation works
-    tup = cross_validation(x,y,3)
+   
+    tup = cross_validation(x,y,2)
     print(tup)
+   

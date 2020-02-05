@@ -40,15 +40,15 @@ class DecisionTreeClassifier(object):
         data_set = np.loadtxt(filename, dtype=str, delimiter=',')
         length = len(data_set)
         line_length = len(data_set[0])
-        x = np.zeros((length, line_length - 1))
+        x = np.zeros((length, line_length - 1),dtype=int)
         y = np.zeros((length,1), dtype=str)
 
         for j in range(length):
             for i in range(line_length):
                 if i < (line_length - 1):
-                    x[j][i] = data_set[j][i]
+                    x[j,i] = data_set[j,i]
                 else:
-                    y[j][0] = data_set[j][i]
+                    y[j,0] = data_set[j,i]
         return x,y
 
 
@@ -319,6 +319,9 @@ class DecisionTreeClassifier(object):
 
     def recursive_predict(self, tree, attributes):
 
+        if not isinstance(tree,dict):
+            return tree
+        
         # Check the required attribute is greater or less than the node
         if attributes[tree["attribute"]] < tree["value"]:
 
