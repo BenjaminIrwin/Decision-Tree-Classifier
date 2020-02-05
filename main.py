@@ -36,7 +36,7 @@ def data_split(x, y, k):
 
     print(data.shape)
     #split and return
-    xpart = np.array(data[:,:,:-1],dtype=int)
+    xpart = np.array(data[:,:,:-1],dtype=float)
     ypart = np.array(data[:,:,-1],dtype=str)
 
     return xpart, ypart
@@ -101,8 +101,8 @@ if __name__ == "__main__":
 
     tree = classifier.root_node
    # print(tree)
-    left_height = classifier.node_height(tree["left"])
-    right_height = classifier.node_height(tree["right"])
+#    left_height = classifier.node_height(tree["left"])
+ #   right_height = classifier.node_height(tree["right"])
     #print(left_height)
     #print(right_height)
     
