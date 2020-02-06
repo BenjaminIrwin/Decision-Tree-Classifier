@@ -457,13 +457,36 @@ class DecisionTreeClassifier(object):
 
 
     def prune_wrapper(self, tree, v_filename):
+        """
+        Wrapper function to load data from file into x and y numpy array
+        format and feed into prune_tree_simple
+        Args:
+            tree (dict) - tree to be pruned
+            v_filename (str) - name of file containg data to validate pruning.
+        Output:
+            tree (dict or str) - tree pruned such that any additional pruning
+                would lower predictive accuracy on validation set.
+        """
 
         x, y = self.load_data(v_filename)
 
         return self.prune_tree_simple(tree, x, y)
 
     def prune_tree_simple(self, tree, x_val, y_val):
-
+        """
+        Function to accept prunes which increase the tree's accuracy, otherwise 
+        ignore
+        Args:
+            tree (dict) - tree to be pruned
+            x_val (2D array) - 2D array of attributes of validation set where
+                each row is a differnt sample and each column is a differnt 
+                attribute
+            y_val (1D array) - 1D array of correct labels for x_val validation 
+                data
+        Output:
+            tree (dict or str) - tree pruned such that any additional pruning
+                would lower predictive accuracy on validation set.
+        """
         predictions = self.predict(x_val)
         eval = Evaluator()
         confusion = eval.confusion_matrix(predictions, y_val)
@@ -480,13 +503,9 @@ class DecisionTreeClassifier(object):
                 new_predictions = self.predict(x_val, True, tree_copy)
                 new_confusion = eval.confusion_matrix(new_predictions, y_val)
                 new_accuracy = eval.accuracy(new_confusion)
-                #print("-")
                 if new_accuracy >= root_accuracy:
                     #if greater or equal accuracy make tree = copy
-                    #print("HELLO")
                     root_accuracy = new_accuracy
-                    #print(tree)
-                    #print(tree_copy)
                     tree = copy.deepcopy(tree_copy)
         
         print("New Accuracy: ", root_accuracy)
@@ -496,7 +515,21 @@ class DecisionTreeClassifier(object):
 
 
     def prune(self, tree_copy, tree):
-
+        """
+        Recursive function to replace first node with two leaves as the 
+        majority class of that node. It will only do this if the node has not
+        already been checked by the outer algorithm.
+        Args:
+            tree (dict or str) - current tree
+            tree_copy (dict or str) - copy of tree
+        Output:
+            is_pruned, tree_copy, tree
+            
+            is_pruned (bool) - was a node found that could be pruned
+            tree_copy (dict or str) - pruned tree
+            tree (dict or str) - unpruned tree with node which was pruned in
+                tree_copy marked as checked: tree["is_checked"] = True
+        """
         is_left_leaf = isinstance(tree["left"], str)
         is_right_leaf = isinstance(tree["right"], str)
 
@@ -530,6 +563,15 @@ class DecisionTreeClassifier(object):
 
     
     def count_leaves(self, tree, count = 0):
+        """
+        Recursive function to count number of leaves in a tree
+        Args:
+            tree (dict) - tree to test
+            count (int) - current count for number of leaves (used in recusive
+                  call)
+        Output:
+            count (int) - number of leaves in tree
+        """
 
         is_left_leaf = isinstance(tree["left"], str)
         is_right_leaf = isinstance(tree["right"], str)
@@ -541,21 +583,16 @@ class DecisionTreeClassifier(object):
 
         #if left not leaf
         if  not is_left_leaf:
-           
             if is_right_leaf:
-                count += 1
-                
+                count += 1  
             count = self.count_leaves(tree["left"], count)
 
         #if right not leaf
         if not is_right_leaf:
-            
             if is_left_leaf:
                 count += 1
-            
             count = self.count_leaves(tree["right"], count)
-           
-
+            
         return count
 
 
