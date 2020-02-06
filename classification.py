@@ -293,7 +293,7 @@ class DecisionTreeClassifier(object):
 
         return left, right
 
-    def predict(self, x):
+    def predict(self, x,other_tree = False):
 
         # make sure that classifier has been trained before predicting
         if not self.is_trained:
@@ -303,9 +303,11 @@ class DecisionTreeClassifier(object):
         # feel free to change this if needed
         predictions = np.zeros((x.shape[0],), dtype=np.object)
         
-        
         # load the classifier
-        tree = np.load('tree.npy',allow_pickle = True).item()
+        if not other_tree:
+            tree = np.load('tree.npy',allow_pickle = True).item()
+        else:
+            tree = other_tree
         
         for j in range(0, len(x)):
             predictions[j] = self.recursive_predict(tree, x[j][:])
@@ -411,9 +413,9 @@ class DecisionTreeClassifier(object):
 
             patches.append(pp.Rectangle((mid_x-width/2,y-height),
                                         width,height,color = 'blue'))
-            annotation = "IntNode:\n" + "\nAtt Split: "+ attributes[tree["attribute"]] 
-            annotation += "<" + str(tree["value"]) 
-            annotation +=  "\nIG:"+str(np.round(tree["gain"],3))
+            annotation = "IntNode:\n" + "\nAtt Split: "+ attributes[node["attribute"]] 
+            annotation += "<" + str(node["value"]) 
+            annotation +=  "\nIG:"+str(np.round(node["gain"],3))
             center_x = mid_x
             center_y = y - height/2.0
             ax.annotate(annotation, (center_x,center_y), color='white',
@@ -469,14 +471,24 @@ class DecisionTreeClassifier(object):
     def calculate_best_pruned_tree(self,trees,x_test,y_test):
         
         eval = Evaluator()
+        stored_j=0
+        previous_accuracy = 0
         
         #go through each tree and compute the ratio of caculated error (right/total)
         for j in range(len(trees)):
             
             tree = trees[j]
+            predictions = self.predict(x_test)
+            confusion = eval.confusion_matrix(predictions, y_test)
+            accuracy = eval.accuracy(confusion)
+            if accuracy > previous_accuracy:
+                stored_j = j
+                previous_accuracy = accuracy
+                
+        return trees[stored_j],previous_accuracy
             
             
-    def get_wrong_prediciton_count(predictions,y_test):
+    def get_wrong_prediction_count(predictions,y_test):
         
         count = 0
         for j in range(len(predictions)):
@@ -486,22 +498,3 @@ class DecisionTreeClassifier(object):
         
         return count
             
-    
-
-
-    """
-    def Calculate_Classification_Loss(self,trees,evaluation_class,y_test):
-
-        #while trees count is an instance of
-        length = len(trees)
-        classification_loss = np.zeros(length)
-
-        while isinstance(trees[count],dict):
-
-            #calculate the miss classfication rate
-
-
-    def tree_test(self,tree):
-        tree['right'] = 'A'
-
-    """

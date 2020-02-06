@@ -72,16 +72,18 @@ if __name__ == "__main__":
     ])
 
     y_test = np.array(["A", "A", "C", "C"])
-    #predictions = classifier.predict(x_test)
-    #print(tree)
+
     filename = "data/test.txt"
     x_test, y_test = classifier.load_data(filename)
     predictions = classifier.predict(x_test)
     
     tree = np.load('tree.npy',allow_pickle = True).item()
-    tree_list = classifier.cost_complexity_pruning(tree)
-
-    print(len(tree_list))
+    trees = classifier.cost_complexity_pruning(tree)
+    tree,accuracy = classifier.calculate_best_pruned_tree(trees,x_test,y_test)
+    print(tree)
+    print(accuracy)
+    classifier.print_tree(tree)
+        
 
 
 
