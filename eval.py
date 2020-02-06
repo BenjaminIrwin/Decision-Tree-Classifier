@@ -64,6 +64,9 @@ class Evaluator(object):
             if (row[0].size != 0 and column[0].size != 0):
                 confusion[row[0], column[0]] += 1
 
+ #        print("confusion:")
+ #       print(confusion)
+
         return confusion
 
     def accuracy(self, confusion):
@@ -88,6 +91,9 @@ class Evaluator(object):
         for i in range(confusion.shape[0]):
             true_total += confusion[i, i]
 
+        if(num_predictions == 0):
+            return 0
+        
         accuracy = true_total / num_predictions
 
         return accuracy
