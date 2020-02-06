@@ -100,15 +100,35 @@ if __name__ == "__main__":
     y_test = np.array(["A", "A", "C", "C"])
 
     tree = classifier.root_node
-   # print(tree)
-#    left_height = classifier.node_height(tree["left"])
- #   right_height = classifier.node_height(tree["right"])
-    #print(left_height)
+    #print(tree)
+    left_height = classifier.node_height(tree["left"])
+    right_height = classifier.node_height(tree["right"])
+   # print(left_height)
     #print(right_height)
+    #classifier.print_tree(tree)
+
+    new_tree = classifier.prune_wrapper(tree, "data/validation.txt")
+    #classifier.print_tree(new_tree)
     
- 
-    #print(y_test)
-    #print(predictions)
+    #Nick Testing
+    #pruning reduces leaves from 274 to 69 --> accuracy from 0.89 to 0.93
+    print(classifier.count_leaves(tree))
+    print(classifier.count_leaves(new_tree))
+    
+    # pruning reduces accuracy on test set from 0.865 to 0.795
+    filename = "data/test.txt"
+    x_test,y_test = classifier.load_data(filename)
+    eval = Evaluator()
+    predictions_old = classifier.predict(x_test)
+    predictions_new = classifier.predict(x_test, True, new_tree)
+    confusion_old = eval.confusion_matrix(predictions_old, y_test)
+    confusion_new = eval.confusion_matrix(predictions_new, y_test)
+    accuracy_old = eval.accuracy(confusion_old)
+    accuracy_new = eval.accuracy(confusion_new)
+    print(accuracy_old)
+    print(accuracy_new)
+
+
     # Check whether the confusion matrix works
     #predictions = classifier.predict(x_test)
     #print("xtest: ", x_test)
