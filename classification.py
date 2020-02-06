@@ -12,7 +12,9 @@ from numpy import ma
 import matplotlib.pyplot as plt
 import matplotlib.patches as pp
 from matplotlib.collections import PatchCollection
+import copy
 
+from eval import Evaluator
 
 class DecisionTreeClassifier(object):
     """
@@ -55,7 +57,7 @@ class DecisionTreeClassifier(object):
         
         #create attribute and label arrays filled with zeros
         x = np.zeros((num_samp, num_att - 1))
-        y = np.zeros((num_samp,1), dtype=str)
+        y = np.zeros(num_samp, dtype=str)
         
         #fill arrays with correct values
         for sample_i in range(num_samp):
@@ -152,7 +154,7 @@ class DecisionTreeClassifier(object):
         self.root_node = self.induce_decision_tree(x, y)
         # self.simple_node = self.induce_decision_tree(x,y,True)
         
-        print(self.root_node)
+        #print(self.root_node)
         # set a flag so that we know that the classifier has been trained
         self.is_trained = True
 
@@ -196,7 +198,9 @@ class DecisionTreeClassifier(object):
         #divide data on found partition
         child_1, child_2 = self.split_dataset(node)
 
-        # dont need the data after it is split
+        node["majority_class"] = self.most_common_label(node["data"]["labels"])
+
+        # dont need the data after it is split and majority label found
         del (node["data"])
 
         """
@@ -207,7 +211,7 @@ class DecisionTreeClassifier(object):
         """
         if len(child_1["attributes"]) == 0 or len(child_2["attributes"]) == 0:
             #recombine array of labels (one will be empty)
-            whole_set = np.concatenate((child_1["labels"], child_2["labels"]))
+            whole_set = np.concatenate((child_1["labels"], child_2["labels"]), axis=0)
             #return most common label as terminal leaf node
             return self.most_common_label(whole_set)
 
@@ -250,7 +254,9 @@ class DecisionTreeClassifier(object):
         """
         labels, count = np.unique(data_set, return_counts=True)
         index = np.argmax(count)
-        return data_set[index]
+        #print("FROM HERE!!!!")
+        #print(data_set)
+        return str(data_set[index])
 
     def find_best_node_ideal(self, x, y):
         """
@@ -340,7 +346,7 @@ class DecisionTreeClassifier(object):
         # returns the node
         return {"value": stored_value, "attribute": stored_attribute,
                "gain": best_gain, "data": data, "left": None,\
-                    "right": None}
+                    "right": None, "majority_class": None, "is_checked": False}
 
     def split_dataset(self, node):
         """
@@ -376,7 +382,7 @@ class DecisionTreeClassifier(object):
 
         return left, right
 
-    def predict(self, x):
+    def predict(self, x, other_tree = False, tree = None):
         """ Predicts a set of samples using the trained DecisionTreeClassifier.
         
         Assumes that the DecisionTreeClassifier has already been trained.
@@ -400,9 +406,13 @@ class DecisionTreeClassifier(object):
                             " trained.")
 
         # set up empty N-dimensional vector to store predicted labels 
-        predictions = np.zeros((x.shape[0],), dtype=str)
+        predictions = np.zeros(x.shape[0], dtype=str)
+
         # load the classifier
-        root_of_tree = self.root_node
+        if other_tree:
+            root_of_tree = tree
+        else:
+            root_of_tree = self.root_node
 
         for j in range(len(x)):
             predictions[j] = self.recursive_predict(root_of_tree, x[j][:])
@@ -427,7 +437,9 @@ class DecisionTreeClassifier(object):
 
         # Check the required attribute is greater or less than the node split
         # then recursively call function on tree from child node.
-        elif attributes[tree["attribute"]] < tree["value"]:
+        #print(type(tree))
+     
+        if attributes[tree["attribute"]] < tree["value"]:
             return self.recursive_predict(tree["left"], attributes)
         else:
             return self.recursive_predict(tree["right"], attributes)
@@ -443,8 +455,112 @@ class DecisionTreeClassifier(object):
         
         return 1 + max(self.node_height(node["left"]),self.node_height(node["right"]))
 
-                                         
+
+    def prune_wrapper(self, tree, v_filename):
+
+        x, y = self.load_data(v_filename)
+
+        return self.prune_tree_simple(tree, x, y)
+
+    def prune_tree_simple(self, tree, x_val, y_val):
+
+        predictions = self.predict(x_val)
+        eval = Evaluator()
+        confusion = eval.confusion_matrix(predictions, y_val)
+        root_accuracy = eval.accuracy(confusion)
+        print("Original Accuracy: ", root_accuracy)
+
+        is_pruned = True
+        while (is_pruned and isinstance(tree, dict)):
+            #make copy of tree then attempt to prune copy
+            tree_copy = copy.deepcopy(tree)
+            (is_pruned, tree_copy, tree) = self.prune(tree_copy, tree)
+            if is_pruned:
+                #compare accuracy of pruned tree to original
+                new_predictions = self.predict(x_val, True, tree_copy)
+                new_confusion = eval.confusion_matrix(new_predictions, y_val)
+                new_accuracy = eval.accuracy(new_confusion)
+                #print("-")
+                if new_accuracy >= root_accuracy:
+                    #if greater or equal accuracy make tree = copy
+                    #print("HELLO")
+                    root_accuracy = new_accuracy
+                    #print(tree)
+                    #print(tree_copy)
+                    tree = copy.deepcopy(tree_copy)
+        
+        print("New Accuracy: ", root_accuracy)
+        return tree
+
+
+
+
+    def prune(self, tree_copy, tree):
+
+        is_left_leaf = isinstance(tree["left"], str)
+        is_right_leaf = isinstance(tree["right"], str)
+
+        #if both children leaves
+        if is_left_leaf and is_right_leaf and not tree["is_checked"]:
+            tree_copy = copy.deepcopy(tree_copy["majority_class"])
+            tree["is_checked"] = True
+            return True, tree_copy, tree
+
+        #if left not leaf
+        if not is_left_leaf:
+            branch_a = self.prune(tree_copy["left"], tree["left"])
+            #save updated trees
+            tree_copy["left"] = copy.deepcopy(branch_a[1])
+            tree["left"] = copy.deepcopy(branch_a[2])
+            if branch_a[0]:
+                #return tree if pruning done otherwise try right branch
+                return True, tree_copy, tree
+
+        #if right not leaf
+        if not is_right_leaf:
+            branch_a = self.prune(tree_copy["right"], tree["right"])
+            #save updated tree
+            tree_copy["right"] = copy.deepcopy(branch_a[1])
+            tree["right"] = copy.deepcopy(branch_a[2])
+            if branch_a[0]:
+                #return tree if pruning done
+                return True, tree_copy, tree
+
+        return False, tree_copy, tree
+
     
+    def count_leaves(self, tree, count = 0):
+
+        is_left_leaf = isinstance(tree["left"], str)
+        is_right_leaf = isinstance(tree["right"], str)
+
+        #if both children leaves
+        if is_left_leaf and is_right_leaf:
+            count +=2
+            return count
+
+        #if left not leaf
+        if  not is_left_leaf:
+           
+            if is_right_leaf:
+                count += 1
+                
+            count = self.count_leaves(tree["left"], count)
+
+        #if right not leaf
+        if not is_right_leaf:
+            
+            if is_left_leaf:
+                count += 1
+            
+            count = self.count_leaves(tree["right"], count)
+           
+
+        return count
+
+
+
+
     def print_tree(self,tree):
         
         #Attrubute column labels
@@ -455,9 +571,9 @@ class DecisionTreeClassifier(object):
         fig,ax = plt.subplots(nrows = 1,ncols=1)
         ax.xaxis.set_visible(False)
         ax.yaxis.set_visible(False)
-        y = 1000
+        y = 100000000
         x1 = 0
-        x2 = 1000
+        x2 = 100000000
         mid_x = (x1 + x2)/2
         height = 50
         width = 200
@@ -507,8 +623,8 @@ class DecisionTreeClassifier(object):
             plt.plot([parent_center_x,mid_x],[y+height,y],'black',linestyle=':',marker='')
         
         #Maximum depth to print out
-        if depth ==3:
-            return
+#        if depth ==3:
+#            return
     
         #else do all this stuff
         annotation = "depth:"+str(0) + " " + attributes[node["attribute"]] + "<" + str(node["value"])

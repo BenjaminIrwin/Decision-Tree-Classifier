@@ -47,14 +47,14 @@ class Evaluator(object):
 
         confusion = np.zeros((len(class_labels), len(class_labels)), dtype=np.int)
 
-        print("printing prediction")
-        print(prediction)
-        print("printing annotation")
-        print(annotation)
-
-        print("printing empty confusion")
-        print(confusion)
-        print(prediction)
+#        print("printing prediction")
+#        print(prediction)
+#        print("printing annotation")
+#        print(annotation)
+#
+#        print("printing empty confusion")
+#        print(confusion)
+#        print(prediction)
 
         for i in range(0, len(annotation)):
 
@@ -151,7 +151,7 @@ class Evaluator(object):
 
         # You will also need to change this
         macro_r = self.macro_average(r)
-        print("MACRO AVERAGE: ", macro_r)
+        #print("MACRO AVERAGE: ", macro_r)
         return r, macro_r
 
     def f1_score(self, confusion):
