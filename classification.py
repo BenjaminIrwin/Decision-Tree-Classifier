@@ -85,118 +85,118 @@ class DecisionTreeClassifier(object):
         ax.set_xlim(0.25, len(labels) + 0.75)
         ax.set_xlabel('Sample name')
 
+#
+#    def evaluate_input(self,x,y):
+#        """
+#        Function to evaluate data loaded from file
+#        Args:
+#            x (2D array) - 2D array of training data where each row
+#            corresponds to a different sample and each column corresponds to a
+#            different attribute.
+#            y (1D array) -  where each index corresponds to the
+#            ground truth label of the sample x[index][]
+#        """
+#
+#
+#        # create test data
+#        np.random.seed(19680801)
+#        data = [sorted(np.random.normal(0, std, 100)) for std in range(1, 5)]
+#
+#        fig, (ax1, ax2) = plt.subplots(figsize=(9, 4),
+#                                       sharey=True)
+#
+#        ax1.set_title('Default violin plot')
+#        ax1.set_ylabel('Observed values')
+#        ax1.violinplot(data)
+#
+#        parts = ax2.violinplot(
+#            data, showmeans=False, showmedians=False,
+#            showextrema=False)
+#
+#        for pc in parts['bodies']:
+#            pc.set_facecolor('#D43F3A')
+#            pc.set_edgecolor('black')
+#            pc.set_alpha(1)
+#
+#        quartile1, medians, quartile3 = np.percentile(data, [25, 50, 75],
+#                                                      axis=1)
+#        whiskers = np.array([
+#            self.adjacent_values(sorted_array, q1, q3)
+#            for sorted_array, q1, q3 in zip(data, quartile1, quartile3)])
+#        whiskersMin, whiskersMax = whiskers[:, 0], whiskers[:, 1]
+#
+#        inds = np.arange(1, len(medians) + 1)
+#        ax2.scatter(inds, medians, marker='o', color='white', s=30, zorder=3)
+#        ax2.vlines(inds, quartile1, quartile3, color='k', linestyle='-', lw=5)
+#        ax2.vlines(inds, whiskersMin, whiskersMax, color='k', linestyle='-',
+#                   lw=1)
+#
+#        # set style for the axes
+#        labels = ['x-box', 'y-box', 'width', 'height', 'nopix', 'x-bar',
+#                  'y-bar', 'x2bar', 'y2bar', 'xybar', 'x2ybr', 'xy2br',
+#                  'x-ege', 'xegvy', 'y-ege', 'yegvx']
+#        for ax in [ax1, ax2]:
+#            self.set_axis_style(ax, labels)
+#
+#        plt.subplots_adjust(bottom=0.15, wspace=0.05)
+#        plt.show()
+#
+#        """
+#        alphabet, count = np.unique(y, return_counts=True)
+#        alphabet_count = np.zeros((len(alphabet)))
+#        alphabet_proportions_1 = count / len(y)
+#        print("alphabet:")
+#        print(alphabet)
+#        print("alphabet proportions:")
+#        print(alphabet_proportions_1)
+#
+#        length, width = np.shape(x)
+#        print('test')
+#        print(np.amax(x[:, 0]))
+#        minimum_attribute_value = np.amin(x, axis=0)
+#        maximum_attribute_value = np.amax(x, axis=0)
+#        attribute_ranges_1 = maximum_attribute_value - minimum_attribute_value
+#        print("minimum:")
+#        print(minimum_attribute_value)
+#        print("maximum:")
+#        print(maximum_attribute_value)
+#        print("attribute ranges:")
+#        print(attribute_ranges_1)
+#        '''''
+#        filename = "data/train_noisy.txt"
+#        classifier = DecisionTreeClassifier()
+#        x,y = classifier.load_data(filename)
+#
+#        print(len(x))
+#        print(len(x[0,:]))
+#
+#        alphabet,count = np.unique(y,return_counts=True)
+#        alphabet_count = np.zeros((len(alphabet)))
+#        alphabet_proportions = count/len(y)
+#        print("alphabet:")
+#        print(alphabet)
+#        print("alphabet proportions:")
+#        print(alphabet_proportions)
+#
+#        length,width = np.shape(x)
+#
+#        minimum_attribute_value = np.amin(x,axis=0)
+#        maximum_attribute_value = np.amax(x,axis=0)
+#        attribute_ranges = maximum_attribute_value - minimum_attribute_value
+#        print("minimum:")
+#        print(minimum_attribute_value)
+#        print("maximum:")
+#        print(maximum_attribute_value)
+#        print("attribute ranges:")
+#        print(attribute_ranges)
+#
+#        range_difference = attribute_ranges_1-attribute_ranges
+#        proportion_difference = alphabet_proportions_1-alphabet_proportions
+#        print(range_difference)
+#        print(np.round(proportion_difference*100,2))
+#        """
 
-    def evaluate_input(self,x,y):
-        """
-        Function to evaluate data loaded from file
-        Args:
-            x (2D array) - 2D array of training data where each row
-            corresponds to a different sample and each column corresponds to a
-            different attribute.
-            y (1D array) -  where each index corresponds to the
-            ground truth label of the sample x[index][]
-        """
-
-
-        # create test data
-        np.random.seed(19680801)
-        data = [sorted(np.random.normal(0, std, 100)) for std in range(1, 5)]
-
-        fig, (ax1, ax2) = plt.subplots(figsize=(9, 4),
-                                       sharey=True)
-
-        ax1.set_title('Default violin plot')
-        ax1.set_ylabel('Observed values')
-        ax1.violinplot(data)
-
-        parts = ax2.violinplot(
-            data, showmeans=False, showmedians=False,
-            showextrema=False)
-
-        for pc in parts['bodies']:
-            pc.set_facecolor('#D43F3A')
-            pc.set_edgecolor('black')
-            pc.set_alpha(1)
-
-        quartile1, medians, quartile3 = np.percentile(data, [25, 50, 75],
-                                                      axis=1)
-        whiskers = np.array([
-            self.adjacent_values(sorted_array, q1, q3)
-            for sorted_array, q1, q3 in zip(data, quartile1, quartile3)])
-        whiskersMin, whiskersMax = whiskers[:, 0], whiskers[:, 1]
-
-        inds = np.arange(1, len(medians) + 1)
-        ax2.scatter(inds, medians, marker='o', color='white', s=30, zorder=3)
-        ax2.vlines(inds, quartile1, quartile3, color='k', linestyle='-', lw=5)
-        ax2.vlines(inds, whiskersMin, whiskersMax, color='k', linestyle='-',
-                   lw=1)
-
-        # set style for the axes
-        labels = ['x-box', 'y-box', 'width', 'height', 'nopix', 'x-bar',
-                  'y-bar', 'x2bar', 'y2bar', 'xybar', 'x2ybr', 'xy2br',
-                  'x-ege', 'xegvy', 'y-ege', 'yegvx']
-        for ax in [ax1, ax2]:
-            self.set_axis_style(ax, labels)
-
-        plt.subplots_adjust(bottom=0.15, wspace=0.05)
-        plt.show()
-
-        """
-        alphabet, count = np.unique(y, return_counts=True)
-        alphabet_count = np.zeros((len(alphabet)))
-        alphabet_proportions_1 = count / len(y)
-        print("alphabet:")
-        print(alphabet)
-        print("alphabet proportions:")
-        print(alphabet_proportions_1)
-
-        length, width = np.shape(x)
-        print('test')
-        print(np.amax(x[:, 0]))
-        minimum_attribute_value = np.amin(x, axis=0)
-        maximum_attribute_value = np.amax(x, axis=0)
-        attribute_ranges_1 = maximum_attribute_value - minimum_attribute_value
-        print("minimum:")
-        print(minimum_attribute_value)
-        print("maximum:")
-        print(maximum_attribute_value)
-        print("attribute ranges:")
-        print(attribute_ranges_1)
-        '''''
-        filename = "data/train_noisy.txt"
-        classifier = DecisionTreeClassifier()
-        x,y = classifier.load_data(filename)
-
-        print(len(x))
-        print(len(x[0,:]))
-
-        alphabet,count = np.unique(y,return_counts=True)
-        alphabet_count = np.zeros((len(alphabet)))
-        alphabet_proportions = count/len(y)
-        print("alphabet:")
-        print(alphabet)
-        print("alphabet proportions:")
-        print(alphabet_proportions)
-
-        length,width = np.shape(x)
-
-        minimum_attribute_value = np.amin(x,axis=0)
-        maximum_attribute_value = np.amax(x,axis=0)
-        attribute_ranges = maximum_attribute_value - minimum_attribute_value
-        print("minimum:")
-        print(minimum_attribute_value)
-        print("maximum:")
-        print(maximum_attribute_value)
-        print("attribute ranges:")
-        print(attribute_ranges)
-
-        range_difference = attribute_ranges_1-attribute_ranges
-        proportion_difference = alphabet_proportions_1-alphabet_proportions
-        print(range_difference)
-        print(np.round(proportion_difference*100,2))
-        """
-
-     def train(self, x, y):
+    def train(self, x, y):
         """
         Function to creat decision tree based on training data in x, y
         Args:

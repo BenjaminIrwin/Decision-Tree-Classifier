@@ -49,7 +49,7 @@ if __name__ == "__main__":
     filename = "data/train_full.txt"
     classifier = DecisionTreeClassifier()
     x,y = classifier.load_data(filename)
-    classifier.evaluate_input(x,y)
+    #classifier.evaluate_input(x,y)
 
     print("Training the decision tree...")
     classifier = classifier.train(x,y)
