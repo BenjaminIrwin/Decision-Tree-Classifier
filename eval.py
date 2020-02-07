@@ -66,6 +66,7 @@ class Evaluator(object):
 
         return confusion
 
+
     def accuracy(self, confusion):
         """ Computes the accuracy given a confusion matrix.
 

@@ -5,6 +5,7 @@
 #
 # Your tasks: Complete the train() and predict() methods of the 
 # DecisionTreeClassifier 
+#http://mlwiki.org/index.php/Cost-Complexity_Pruning
 ##############################################################################
 
 import numpy as np
@@ -12,6 +13,8 @@ from numpy import ma
 import matplotlib.pyplot as plt
 import matplotlib.patches as pp
 from matplotlib.collections import PatchCollection
+from tempfile import TemporaryFile
+from eval import Evaluator
 import copy
 
 from eval import Evaluator
@@ -57,16 +60,57 @@ class DecisionTreeClassifier(object):
         
         #create attribute and label arrays filled with zeros
         x = np.zeros((num_samp, num_att - 1))
-        y = np.zeros(num_samp, dtype=str)
+        y = np.zeros((num_samp,1), dtype=str)
         
         #fill arrays with correct values
         for sample_i in range(num_samp):
             for attribute_i in range(num_att):
                 if attribute_i < (num_att - 1):
-                    x[sample_i][attribute_i] = data_set[sample_i][attribute_i]
+                    x[sample_i,attribute_i] = data_set[sample_i,attribute_i]
                 else:
-                    y[sample_i] = data_set[sample_i][attribute_i]
+                    y[sample_i] = data_set[sample_i,attribute_i]
         return x, y
+    
+    
+    def adjacent_values(vals, q1, q3):
+        upper_adjacent_value = q3 + (q3 - q1) * 1.5
+        upper_adjacent_value = np.clip(upper_adjacent_value, q3, vals[-1])
+
+        lower_adjacent_value = q1 - (q3 - q1) * 1.5
+        lower_adjacent_value = np.clip(lower_adjacent_value, vals[0], q1)
+        return lower_adjacent_value, upper_adjacent_value
+
+    def set_axis_style(ax, labels):
+        ax.get_xaxis().set_tick_params(direction='out')
+        ax.xaxis.set_ticks_position('bottom')
+        ax.set_xticks(np.arange(1, len(labels) + 1))
+        ax.set_xticklabels(labels)
+        ax.set_xlim(0.25, len(labels) + 0.75)
+        ax.set_xlabel('Sample name')
+
+
+    def evaluate_input(self,x,y):
+
+        alphabet, count = np.unique(y, return_counts=True)
+        alphabet_count = np.zeros((len(alphabet)))
+        alphabet_proportions_1 = count / len(y)
+        print("alphabet:")
+        print(alphabet)
+        print("alphabet proportions:")
+        print(alphabet_proportions_1)
+
+        length, width = np.shape(x)
+        print('test')
+        print(np.amax(x[:, 0]))
+        minimum_attribute_value = np.amin(x, axis=0)
+        maximum_attribute_value = np.amax(x, axis=0)
+        attribute_ranges_1 = maximum_attribute_value - minimum_attribute_value
+        print("minimum:")
+        print(minimum_attribute_value)
+        print("maximum:")
+        print(maximum_attribute_value)
+        print("attribute ranges:")
+        print(attribute_ranges_1)
 
 
     def adjacent_values(vals, q1, q3):
@@ -211,35 +255,18 @@ class DecisionTreeClassifier(object):
         """
         # Make sure that x and y have the same number of instances
         assert x.shape[0] == len(y), \
-            "Training failed. x and y must have the same number of instances."
+        "Training failed. x and y must have the same number of instances."
 
-        self.root_node = self.induce_decision_tree(x, y)
-        # self.simple_node = self.induce_decision_tree(x,y,True)
-        
-        #print(self.root_node)
+        tree = self.induce_decision_tree(x,y)
+        #print(tree)
+        np.save('tree.npy',tree)
+
         # set a flag so that we know that the classifier has been trained
         self.is_trained = True
 
         return self
 
     def induce_decision_tree(self, x, y):
-        """
-        Recursive function to create decision tree based on training data
-        in x, y
-        Args:
-            x (2D array) - 2D array of training data where each row
-            corresponds to a different sample and each column corresponds to a
-            different attribute.
-            y (1D array) -  where each index corresponds to the
-            ground truth label of the sample x[index][]
-        Output:
-            node (dict) - root node of decision tree with child nodes stored
-            under "left" and "right" keys. The leaf nodes contain a string
-            corresponding to the label.
-        """
-
-        labels = np.unique(y) #return array of unique labels
-        length = len(labels) #number of unique labels
 
         """
         When all data in x corresponds to 1 type of label, no further 
@@ -254,37 +281,67 @@ class DecisionTreeClassifier(object):
                   "function.")
             return None
 
-        #find best partition for node
+
         node = self.find_best_node_ideal(x, y)
 
         #divide data on found partition
         child_1, child_2 = self.split_dataset(node)
 
-        node["majority_class"] = self.most_common_label(node["data"]["labels"])
-
-        # dont need the data after it is split and majority label found
-        del (node["data"])
-
-        """
-        When there are still multiple different types of labels in data but any
-        kind of division does not decrease entropy ('best' information gain 
-        with no division) a leaf node has been found -- terminate recursion
-        and choose most common label in data as leaf label.
-        """
         if len(child_1["attributes"]) == 0 or len(child_2["attributes"]) == 0:
-            #recombine array of labels (one will be empty)
             whole_set = np.concatenate((child_1["labels"], child_2["labels"]), axis=0)
-            #return most common label as terminal leaf node
-            return self.most_common_label(whole_set)
+            return self.most_common_label(data_set)
+        
+        
+        left_probability = len(child_1["labels"])/ len(node["data"])
+        right_probability = len(child_2["labels"])/len(node["data"])
+      
+        parent_labels,parent_count = np.unique(node["data"]["labels"],return_counts=True)
+        #node["most_occuring_letter"] = self.terminal_leaf(node["data"]["labels"])
+        node["majority_class"] = self.most_common_label(node["data"]["labels"])
+        del (node["data"])
+        
+        left_child_labels = self.count_occurrences(parent_labels,child_1["labels"])
+        right_child_labels = self.count_occurrences(parent_labels,child_2["labels"])
 
-        # Recursively call the function on the split dataset
-        node["left"] = self.induce_decision_tree(child_1["attributes"],
-                                                 child_1["labels"])
 
-        node["right"] = self.induce_decision_tree(child_2["attributes"],
-                                                  child_2["labels"])
+        node['K'] = self.compute_k(left_probability,left_child_labels,
+                                   right_probability,right_child_labels,parent_count)
+        
+        
+        #Initial Filter to prevent overfitting
+        if node['K'] < 15:
+           return node["majority_class"]
+
+    
+        #Recursively call the function on the split dataset
+        node["left"] = self.induce_decision_tree(child_1["attributes"], child_1["labels"])
+        node["right"] = self.induce_decision_tree(child_2["attributes"], child_2["labels"])
 
         return node
+
+    def count_occurrences(self,parent_occurrences,child_data):
+
+        child_occurrences = np.zeros((1,len(parent_occurrences)))
+
+        for i in range(len(parent_occurrences)):
+            count = 0
+            for j in range(len(child_data)):
+                if child_data[j] == parent_occurrences[i]:
+                    count+=1
+            child_occurrences[0,i] = count
+
+        return child_occurrences
+
+    def compute_k(self,left_probability,left_child_labels,right_probability,
+                  right_child_labels,parent_labels):
+
+        K = 0
+        for i in range(len(left_child_labels)):
+            K += ((left_child_labels[0][i]-(parent_labels[i]*left_probability))**2)/(parent_labels[i]*left_probability)
+        for i in range(len(right_child_labels)):
+            K += ((right_child_labels[0][i] - (parent_labels[i] * right_probability))**2) / (parent_labels[i] * right_probability)
+
+        return K
 
     def find_total_entropy(self, y):
         """
@@ -305,6 +362,19 @@ class DecisionTreeClassifier(object):
         information = label_probabilities * np.log2(label_probabilities)
         entropy = -1 * np.sum(information)
         return entropy
+    
+    def most_common_label(self, data_set):
+        """
+        Returns the most frequent value in 1D numpy array
+        Args:
+            data_set (1D array)
+        Output:
+           most common value in array
+        """
+        labels, count = np.unique(data_set, return_counts=True)
+        index = np.argmax(count)
+        return str(data_set[index])
+
 
     def most_common_label(self, data_set):
         """
@@ -333,7 +403,7 @@ class DecisionTreeClassifier(object):
         Output:
             node (dict) - dictionary contains information on partition,
             including value and attribute to partition over.
-        """
+        """        
         stored_value = 0
         stored_attribute = 0
         best_gain = 0
@@ -402,13 +472,11 @@ class DecisionTreeClassifier(object):
                     stored_value = split_value
                     best_gain = information_gain
 
-        # get the data into the node here
         data = {"attributes": x, "labels": y}
 
-        # returns the node
-        return {"value": stored_value, "attribute": stored_attribute,
-               "gain": best_gain, "data": data, "left": None,\
-                    "right": None, "majority_class": None, "is_checked": False}
+        #Returns the node
+        return {"value": stored_value, "attribute": stored_attribute, "gain": best_gain, "data": data, "left": None,
+                "right": None,'K':None,"majority_class": None, "is_checked": False}
 
     def split_dataset(self, node):
         """
@@ -444,23 +512,7 @@ class DecisionTreeClassifier(object):
 
         return left, right
 
-    def predict(self, x, other_tree = False, tree = None):
-        """ Predicts a set of samples using the trained DecisionTreeClassifier.
-        
-        Assumes that the DecisionTreeClassifier has already been trained.
-        
-        Parameters
-        ----------
-        x : numpy.array
-            An N by K numpy array (N is the number of samples, K is the 
-            number of attributes)
-        
-        Returns
-        -------
-        numpy.array
-            An N-dimensional numpy array containing the predicted class label
-            for each instance in x
-        """
+    def predict(self, x,other_tree = False):
 
         # make sure that classifier has been trained before predicting
         if not self.is_trained:
@@ -468,16 +520,17 @@ class DecisionTreeClassifier(object):
                             " trained.")
 
         # set up empty N-dimensional vector to store predicted labels 
-        predictions = np.zeros(x.shape[0], dtype=str)
-
+        # feel free to change this if needed
+        predictions = np.zeros((x.shape[0],), dtype=np.object)
+        
         # load the classifier
-        if other_tree:
-            root_of_tree = tree
+        if not other_tree:
+            tree = np.load('tree.npy',allow_pickle = True).item()
         else:
-            root_of_tree = self.root_node
-
-        for j in range(len(x)):
-            predictions[j] = self.recursive_predict(root_of_tree, x[j][:])
+            tree = other_tree
+        
+        for j in range(0, len(x)):
+            predictions[j] = self.recursive_predict(tree, x[j][:])
 
         # remember to change this if you rename the variable
         return predictions
@@ -494,30 +547,188 @@ class DecisionTreeClassifier(object):
             string object of label prediction
         """
         #if leaf found return label str
-        if isinstance(tree, str):
+        if not isinstance(tree, dict):
             return tree
 
         # Check the required attribute is greater or less than the node split
         # then recursively call function on tree from child node.
-        #print(type(tree))
-     
         if attributes[tree["attribute"]] < tree["value"]:
             return self.recursive_predict(tree["left"], attributes)
-        else:
-            return self.recursive_predict(tree["right"], attributes)
-
-
-
-
-    
-    def node_height(self,node):
         
+        return self.recursive_predict(tree["right"], attributes)
+
+
+
+    def node_height(self,node):
+
         if not isinstance(node, dict):
             return 0
-        
+
         return 1 + max(self.node_height(node["left"]),self.node_height(node["right"]))
 
 
+    def print_tree(self,tree):
+
+        #Attrubute column labels
+        attributes = {0:"x-box",1:"y-box",2:"width",3:"high",
+                      4:"onpix",5:"x-bar",6:"y-bar",7:"x2bar",
+                      8:"y2bar",9:"xybar",10:"x2ybr",11:"xy2br",
+                      12:"x-ege",13:"xegvy",14:"y-ege",15:"yegvx"}
+
+        fig,ax = plt.subplots(nrows = 1,ncols=1)
+        ax.xaxis.set_visible(False)
+        ax.yaxis.set_visible(False)
+        y = 10000
+        x1 = 0
+        x2 = 10000
+        mid_x = (x1 + x2)/2
+        height = 50
+        width = 600
+        depth = 0
+
+        patches = []
+        patches.append(pp.Rectangle((mid_x-width/2,y-height),width,height,
+                                    color = 'blue'))
+        annotation = "Root:\n" + "\nAtt Split: "+ attributes[tree["attribute"]] 
+        annotation += "<" + str(tree["value"]) 
+        annotation +=  "\nIG:"+str(np.round(tree["gain"],3))
+        center_x = mid_x 
+        center_y = y - height/2.0
+        ax.annotate(annotation, (center_x,center_y), color='white', 
+                    weight='bold',fontsize=4, ha='center', va='center')
+
+        self.recursive_print(tree["left"],mid_x,x1,mid_x,y-2*height,
+                             attributes,depth+1,patches,ax)
+        self.recursive_print(tree["right"],mid_x,mid_x,x2,y-2*height,
+                             attributes,depth+1,patches,ax)
+
+        ax.add_collection(PatchCollection(patches,match_original=True))
+        ax.set_xlim((0,1000))
+        ax.set_ylim((0,1000))
+        ax.autoscale()
+        plt.show()
+
+
+    def recursive_print(self,node,parent_center_x,x1,x2,y,attributes,
+                        depth,patches,ax):
+
+        mid_x = (x1 + x2)/2
+        height = 50
+        width = 600
+
+        if not isinstance(node, dict):
+            #print a leaf node (different colour
+
+            patches.append(pp.Rectangle((mid_x-width/2,y-height),width,
+                                        height,color = 'black'))
+            annotation = "Leaf Node \nLabel = " + str(node)
+            center_x = mid_x
+            center_y = y - height/2.0
+            
+            ax.annotate(annotation, (center_x, center_y), color='white', 
+                        weight='bold',fontsize=4, ha='center', va='center')
+            
+            plt.plot([parent_center_x,mid_x],[y+height,y],'black',
+                    linestyle=':',marker='')
+            return
+
+        else:
+
+            patches.append(pp.Rectangle((mid_x-width/2,y-height),
+                                        width,height,color = 'blue'))
+            annotation = "IntNode:\n" + "\nAtt Split: "+ attributes[node["attribute"]] 
+            annotation += "<" + str(node["value"]) 
+            annotation +=  "\nIG:"+str(np.round(node["gain"],3))
+            center_x = mid_x
+            center_y = y - height/2.0
+            ax.annotate(annotation, (center_x,center_y), color='white',
+                        weight='bold',fontsize=4, ha='center', va='center')
+            plt.plot([parent_center_x,mid_x],[y+height,y],'black',linestyle=':',marker='')
+
+        #Maximum depth to print out taken from Piazza 
+        if depth ==3:
+            return
+
+        #Create the annotation to place into the center of the rectangle
+        annotation = "depth:"+str(0) + " " + attributes[node["attribute"]] 
+        annotation += "<" + str(node["value"])
+        left_height = self.node_height(node["left"]) + 1
+        right_height = self.node_height(node["right"]) + 1
+        weight = left_height/(left_height + right_height)
+
+        weighted_x = x1 + weight*(x2-x1)
+
+        self.recursive_print(node["left"],mid_x,x1,weighted_x,
+                             y-2*height,attributes,depth+1,patches,ax)
+        self.recursive_print(node["right"],mid_x,weighted_x,x2,
+                             y-2*height,attributes,depth+1,patches,ax)
+        
+    
+    
+    #Attempt to get Cost Complexity Pruning working
+    def cost_complexity_pruning(self,node):
+
+        trees = np.array([],dtype=np.object)
+        count = 0
+        tree_copy = node.copy()
+        
+        while isinstance(tree_copy['left'],dict) or isinstance(tree_copy['right'],dict):
+            
+            trees = np.append(trees,self.prune_tree(tree_copy))
+            count = count + 1
+            tree_copy = copy.deepcopy(tree_copy)
+        
+        
+        return trees
+    
+    
+    def prune_tree(self,node):
+
+        if not isinstance(node['left'],dict) and not isinstance(node['right'],dict):
+            return node['majority_class']
+        elif isinstance(node['left'],dict):
+            node['left'] = self.prune_tree(node['left'])
+            return node
+        elif isinstance(node['right'], dict):
+            node['right'] = self.prune_tree(node['right'])
+            return node
+
+        return node
+    
+    
+    def calculate_best_pruned_tree(self,trees,x_test,y_test):
+        
+        eval = Evaluator()
+        stored_j=0
+        previous_accuracy = 0
+        
+        #go through each tree and compute the ratio of caculated error (right/total)
+        for j in range(len(trees)):
+            
+            
+            predictions = self.predict(x_test,trees[j])
+            confusion = eval.confusion_matrix(predictions, y_test)
+            accuracy = eval.accuracy(confusion)
+            #print(accuracy)
+            if accuracy > previous_accuracy:
+                stored_j = j
+                previous_accuracy = accuracy
+                
+        return trees[stored_j],previous_accuracy
+            
+            
+    def get_wrong_prediction_count(predictions,y_test):
+        
+        count = 0
+        for j in range(len(predictions)):
+            
+            if predictions[j] != y_test[j]:
+                count+=1
+        
+        return count
+    
+    
+    #Nicks code for pruning starts here!! Simple pruninig method
     def prune_wrapper(self, tree, v_filename):
         """
         Wrapper function to load data from file into x and y numpy array
@@ -533,7 +744,8 @@ class DecisionTreeClassifier(object):
         x, y = self.load_data(v_filename)
 
         return self.prune_tree_simple(tree, x, y)
-
+    
+    
     def prune_tree_simple(self, tree, x_val, y_val):
         """
         Function to accept prunes which increase the tree's accuracy, otherwise 
@@ -562,7 +774,7 @@ class DecisionTreeClassifier(object):
             (is_pruned, tree_copy, tree) = self.prune(tree_copy, tree)
             if is_pruned:
                 #compare accuracy of pruned tree to original
-                new_predictions = self.predict(x_val, True, tree_copy)
+                new_predictions = self.predict(x_val,tree_copy)
                 new_confusion = eval.confusion_matrix(new_predictions, y_val)
                 new_accuracy = eval.accuracy(new_confusion)
                 if new_accuracy >= root_accuracy:
@@ -572,10 +784,7 @@ class DecisionTreeClassifier(object):
         
         print("New Accuracy: ", root_accuracy)
         return tree
-
-
-
-
+    
     def prune(self, tree_copy, tree):
         """
         Recursive function to replace first node with two leaves as the 
@@ -592,8 +801,8 @@ class DecisionTreeClassifier(object):
             tree (dict or str) - unpruned tree with node which was pruned in
                 tree_copy marked as checked: tree["is_checked"] = True
         """
-        is_left_leaf = isinstance(tree["left"], str)
-        is_right_leaf = isinstance(tree["right"], str)
+        is_left_leaf = not isinstance(tree["left"], dict)
+        is_right_leaf = not isinstance(tree["right"], dict)
 
         #if both children leaves
         if is_left_leaf and is_right_leaf and not tree["is_checked"]:
@@ -622,7 +831,6 @@ class DecisionTreeClassifier(object):
                 return True, tree_copy, tree
 
         return False, tree_copy, tree
-
     
     def count_leaves(self, tree, count = 0):
         """
@@ -635,8 +843,8 @@ class DecisionTreeClassifier(object):
             count (int) - number of leaves in tree
         """
 
-        is_left_leaf = isinstance(tree["left"], str)
-        is_right_leaf = isinstance(tree["right"], str)
+        is_left_leaf = not isinstance(tree["left"], dict)
+        is_right_leaf = not isinstance(tree["right"], dict)
 
         #if both children leaves
         if is_left_leaf and is_right_leaf:
@@ -657,86 +865,5 @@ class DecisionTreeClassifier(object):
             
         return count
 
-
-
-
-    def print_tree(self,tree):
-        
-        #Attrubute column labels
-        attributes = {0:"x-box",1:"y-box",2:"width",3:"high",
-                      4:"onpix",5:"x-bar",6:"y-bar",7:"x2bar",
-                      8:"y2bar",9:"xybar",10:"x2ybr",11:"xy2br",12:"x-ege",13:"xegvy",14:"y-ege",15:"yegvx"}
-        
-        fig,ax = plt.subplots(nrows = 1,ncols=1)
-        ax.xaxis.set_visible(False)
-        ax.yaxis.set_visible(False)
-        y = 100000000
-        x1 = 0
-        x2 = 100000000
-        mid_x = (x1 + x2)/2
-        height = 50
-        width = 200
-        depth = 0
-        
-        patches = []
-        patches.append(pp.Rectangle((mid_x-width/2,y-height),width,height,color = 'blue'))
-        annotation = "Node:\nDepth:"+str(0) + "\nAttribute Split: " + attributes[tree["attribute"]] + "<" + str(tree["value"]) + "\nInformation Gain:"+str(np.round(tree["gain"],3))
-        center_x = mid_x #(mid_x-width/2)
-        center_y = y - height/2.0
-        ax.annotate(annotation, (center_x,center_y), color='white', weight='bold',fontsize=6, ha='center', va='center')
-        
-        self.recursive_print(tree["left"],mid_x,x1,mid_x,y-2*height,attributes,depth+1,patches,ax)
-        self.recursive_print(tree["right"],mid_x,mid_x,x2,y-2*height,attributes,depth+1,patches,ax)
-        
-        ax.add_collection(PatchCollection(patches,match_original=True))
-        ax.set_xlim((0,1000))
-        ax.set_ylim((0,1000))
-        ax.autoscale()
-        plt.show()                     
-        
-        
-    def recursive_print(self,node,parent_center_x,x1,x2,y,attributes,depth,patches,ax):
-        
-        mid_x = (x1 + x2)/2
-        height = 50
-        width = 200
-
-        if not isinstance(node, dict):
-            #print a leaf node (different colour
     
-            patches.append(pp.Rectangle((mid_x-width/2,y-height),width,height,color = 'black'))
-            annotation = "Leaf Node \nLabel = " + str(node)
-            center_x = mid_x
-            center_y = y - height/2.0
-            ax.annotate(annotation, (center_x, center_y), color='white', weight='bold',fontsize=6, ha='center', va='center')
-            plt.plot([parent_center_x,mid_x],[y+height,y],'black',linestyle=':',marker='')
-            return 
-        
-        else:
             
-            patches.append(pp.Rectangle((mid_x-width/2,y-height),width,height,color = 'blue'))
-            annotation = "Node:\nDepth:"+str(depth) + "\nAttribute Split: " + attributes[node["attribute"]] + "<" + str(node["value"])+ "\nInformation Gain:"+str(np.round(node["gain"],3))
-            center_x = mid_x
-            center_y = y - height/2.0
-            ax.annotate(annotation, (center_x,center_y), color='white', weight='bold',fontsize=6, ha='center', va='center')
-            plt.plot([parent_center_x,mid_x],[y+height,y],'black',linestyle=':',marker='')
-        
-        #Maximum depth to print out
-#        if depth ==3:
-#            return
-    
-        #else do all this stuff
-        annotation = "depth:"+str(0) + " " + attributes[node["attribute"]] + "<" + str(node["value"])
-        
-        left_height = self.node_height(node["left"]) + 1
-        right_height = self.node_height(node["right"]) + 1
-        weight = left_height/(left_height + right_height)
-        
-        weighted_x = x1 + weight*(x2-x1)
-    
-        self.recursive_print(node["left"],mid_x,x1,weighted_x,y-2*height,attributes,depth+1,patches,ax)
-        self.recursive_print(node["right"],mid_x,weighted_x,x2,y-2*height,attributes,depth+1,patches,ax)
-        
-    
-  
-       
