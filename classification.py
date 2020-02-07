@@ -17,11 +17,12 @@ from tempfile import TemporaryFile
 from eval import Evaluator
 import copy
 
+from eval import Evaluator
 
 class DecisionTreeClassifier(object):
     """
     A decision tree classifier
-    
+ 
     Attributes
     ----------
     is_trained : bool
@@ -38,6 +39,7 @@ class DecisionTreeClassifier(object):
 
     def __init__(self):
         self.is_trained = False
+        self.root_node = {}
 
     def load_data(self, filename):
         """
@@ -110,8 +112,147 @@ class DecisionTreeClassifier(object):
         print("attribute ranges:")
         print(attribute_ranges_1)
 
-    def train(self, x, y):
 
+    def adjacent_values(vals, q1, q3):
+        upper_adjacent_value = q3 + (q3 - q1) * 1.5
+        upper_adjacent_value = np.clip(upper_adjacent_value, q3, vals[-1])
+
+        lower_adjacent_value = q1 - (q3 - q1) * 1.5
+        lower_adjacent_value = np.clip(lower_adjacent_value, vals[0], q1)
+        return lower_adjacent_value, upper_adjacent_value
+
+    def set_axis_style(ax, labels):
+        ax.get_xaxis().set_tick_params(direction='out')
+        ax.xaxis.set_ticks_position('bottom')
+        ax.set_xticks(np.arange(1, len(labels) + 1))
+        ax.set_xticklabels(labels)
+        ax.set_xlim(0.25, len(labels) + 0.75)
+        ax.set_xlabel('Sample name')
+
+#
+#    def evaluate_input(self,x,y):
+#        """
+#        Function to evaluate data loaded from file
+#        Args:
+#            x (2D array) - 2D array of training data where each row
+#            corresponds to a different sample and each column corresponds to a
+#            different attribute.
+#            y (1D array) -  where each index corresponds to the
+#            ground truth label of the sample x[index][]
+#        """
+#
+#
+#        # create test data
+#        np.random.seed(19680801)
+#        data = [sorted(np.random.normal(0, std, 100)) for std in range(1, 5)]
+#
+#        fig, (ax1, ax2) = plt.subplots(figsize=(9, 4),
+#                                       sharey=True)
+#
+#        ax1.set_title('Default violin plot')
+#        ax1.set_ylabel('Observed values')
+#        ax1.violinplot(data)
+#
+#        parts = ax2.violinplot(
+#            data, showmeans=False, showmedians=False,
+#            showextrema=False)
+#
+#        for pc in parts['bodies']:
+#            pc.set_facecolor('#D43F3A')
+#            pc.set_edgecolor('black')
+#            pc.set_alpha(1)
+#
+#        quartile1, medians, quartile3 = np.percentile(data, [25, 50, 75],
+#                                                      axis=1)
+#        whiskers = np.array([
+#            self.adjacent_values(sorted_array, q1, q3)
+#            for sorted_array, q1, q3 in zip(data, quartile1, quartile3)])
+#        whiskersMin, whiskersMax = whiskers[:, 0], whiskers[:, 1]
+#
+#        inds = np.arange(1, len(medians) + 1)
+#        ax2.scatter(inds, medians, marker='o', color='white', s=30, zorder=3)
+#        ax2.vlines(inds, quartile1, quartile3, color='k', linestyle='-', lw=5)
+#        ax2.vlines(inds, whiskersMin, whiskersMax, color='k', linestyle='-',
+#                   lw=1)
+#
+#        # set style for the axes
+#        labels = ['x-box', 'y-box', 'width', 'height', 'nopix', 'x-bar',
+#                  'y-bar', 'x2bar', 'y2bar', 'xybar', 'x2ybr', 'xy2br',
+#                  'x-ege', 'xegvy', 'y-ege', 'yegvx']
+#        for ax in [ax1, ax2]:
+#            self.set_axis_style(ax, labels)
+#
+#        plt.subplots_adjust(bottom=0.15, wspace=0.05)
+#        plt.show()
+#
+#        """
+#        alphabet, count = np.unique(y, return_counts=True)
+#        alphabet_count = np.zeros((len(alphabet)))
+#        alphabet_proportions_1 = count / len(y)
+#        print("alphabet:")
+#        print(alphabet)
+#        print("alphabet proportions:")
+#        print(alphabet_proportions_1)
+#
+#        length, width = np.shape(x)
+#        print('test')
+#        print(np.amax(x[:, 0]))
+#        minimum_attribute_value = np.amin(x, axis=0)
+#        maximum_attribute_value = np.amax(x, axis=0)
+#        attribute_ranges_1 = maximum_attribute_value - minimum_attribute_value
+#        print("minimum:")
+#        print(minimum_attribute_value)
+#        print("maximum:")
+#        print(maximum_attribute_value)
+#        print("attribute ranges:")
+#        print(attribute_ranges_1)
+#        '''''
+#        filename = "data/train_noisy.txt"
+#        classifier = DecisionTreeClassifier()
+#        x,y = classifier.load_data(filename)
+#
+#        print(len(x))
+#        print(len(x[0,:]))
+#
+#        alphabet,count = np.unique(y,return_counts=True)
+#        alphabet_count = np.zeros((len(alphabet)))
+#        alphabet_proportions = count/len(y)
+#        print("alphabet:")
+#        print(alphabet)
+#        print("alphabet proportions:")
+#        print(alphabet_proportions)
+#
+#        length,width = np.shape(x)
+#
+#        minimum_attribute_value = np.amin(x,axis=0)
+#        maximum_attribute_value = np.amax(x,axis=0)
+#        attribute_ranges = maximum_attribute_value - minimum_attribute_value
+#        print("minimum:")
+#        print(minimum_attribute_value)
+#        print("maximum:")
+#        print(maximum_attribute_value)
+#        print("attribute ranges:")
+#        print(attribute_ranges)
+#
+#        range_difference = attribute_ranges_1-attribute_ranges
+#        proportion_difference = alphabet_proportions_1-alphabet_proportions
+#        print(range_difference)
+#        print(np.round(proportion_difference*100,2))
+#        """
+
+    def train(self, x, y):
+        """
+        Function to creat decision tree based on training data in x, y
+        Args:
+            x (2D array) - 2D array of training data where each row
+            corresponds to a different sample and each column corresponds to a
+            different attribute.
+            y (1D array) -  where each index corresponds to the
+            ground truth label of the sample x[index][]
+
+        Output:
+            self
+        """
         # Make sure that x and y have the same number of instances
         assert x.shape[0] == len(y), \
         "Training failed. x and y must have the same number of instances."
@@ -127,19 +268,23 @@ class DecisionTreeClassifier(object):
 
     def induce_decision_tree(self, x, y):
 
-        # Check whether they all equal the same thing
-        labels = np.unique(y)
-        length = len(labels)
+        """
+        When all data in x corresponds to 1 type of label, no further 
+        partitioning is needed. Hence return label as leaf node. 
+        """
         if length == 1:
             return labels[0]
 
         # Nothing in the data set
         if len(x) == 0:
+            print("induce_decision_tree Error: No sample data passed into "
+                  "function.")
             return None
 
 
         node = self.find_best_node_ideal(x, y)
 
+        #divide data on found partition
         child_1, child_2 = self.split_dataset(node)
 
         if len(child_1["attributes"]) == 0 or len(child_2["attributes"]) == 0:
@@ -231,10 +376,19 @@ class DecisionTreeClassifier(object):
         return str(data_set[index])
 
 
-    def terminal_leaf(self, data_set):
+    def most_common_label(self, data_set):
+        """
+        Returns the most frequent value in 1D numpy array
+        Args:
+            data_set (1D array)
+        Output:
+           most common value in array
+        """
         labels, count = np.unique(data_set, return_counts=True)
         index = np.argmax(count)
-        return data_set[index]
+        #print("FROM HERE!!!!")
+        #print(data_set)
+        return str(data_set[index])
 
     def find_best_node_ideal(self, x, y):
         """
@@ -362,7 +516,8 @@ class DecisionTreeClassifier(object):
 
         # make sure that classifier has been trained before predicting
         if not self.is_trained:
-            raise Exception("Decision Tree classifier has not yet been trained.")
+            raise Exception("Decision Tree classifier has not yet been"
+                            " trained.")
 
         # set up empty N-dimensional vector to store predicted labels 
         # feel free to change this if needed

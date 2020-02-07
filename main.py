@@ -28,8 +28,8 @@ def cross_validation(x, y, k):
         # split data correctly
         xval = xpart[i]
         yval = ypart[i]
-        xtrain = np.delete(xpart,i,0)[0]
-        ytrain = np.delete(ypart,i,0)[0]
+        xtrain = np.delete(xpart, i)
+        ytrain = np.delete(ypart, i)
 
         # train on training slice
         classifiers[i] = DecisionTreeClassifier()
@@ -40,7 +40,7 @@ def cross_validation(x, y, k):
 
         # validate using statistics
         eval = Evaluator()
-        confusion = eval.confusion_matrix(predictions, yval)
+        confusion = eval.confusion_matrix(predictions, y)
         accuracy[i] = eval.accuracy(confusion)
 
     return accuracy, classifiers
@@ -88,6 +88,7 @@ if __name__ == "__main__":
     filename = "data/train_full.txt"
     classifier = DecisionTreeClassifier()
     x,y = classifier.load_data(filename)
+    #classifier.evaluate_input(x,y)
 
     print("Training the decision tree...")
     classifier = classifier.train(x,y)
