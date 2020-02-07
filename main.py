@@ -11,7 +11,7 @@ def data_split(x, y, k):
     data = np.array(np.split(data,k))
 
     #split and return
-    xpart = np.array(data[:,:,:-1],dtype=float)
+    xpart = np.array(data[:,:,:-1],dtype=int)
     ypart = np.array(data[:,:,-1],dtype=str)
 
     return xpart, ypart
@@ -28,8 +28,8 @@ def cross_validation(x, y, k):
         # split data correctly
         xval = xpart[i]
         yval = ypart[i]
-        xtrain = np.delete(xpart, i)
-        ytrain = np.delete(ypart, i)
+        xtrain = np.delete(xpart,i,0)[0]
+        ytrain = np.delete(ypart,i,0)[0]
 
         # train on training slice
         classifiers[i] = DecisionTreeClassifier()
@@ -40,26 +40,27 @@ def cross_validation(x, y, k):
 
         # validate using statistics
         eval = Evaluator()
-        confusion = eval.confusion_matrix(predictions, y)
+        confusion = eval.confusion_matrix(predictions, yval)
         accuracy[i] = eval.accuracy(confusion)
 
     return accuracy, classifiers
 
 def weighted_predict(classifiers,x_test):
 
-    predictions = np.zeros([len(x_test),len(classifiers)],dtype=object)
+    predictions = np.zeros([len(classifiers),len(x_test)],dtype=object)
     result = np.zeros(len(x_test),dtype=object)
 
     for i in range(len(classifiers)):
-        predictions[:,i] = classifiers[i].predict(x_test)
+        predictions[i,:] = classifiers[i].predict(x_test)
 
 
-    for i in range(predictions.shape[0]):
-        vals, counts = np.unique(predictions[i,:], return_counts = True)
+    for i in range(predictions.shape[1]):
+        vals, counts = np.unique(predictions[:,i], return_counts = True)
         #print("vals counts")
         #print(vals,counts)
         result[i] = vals[np.argmax(counts)]        
 
+   # print(predictions)
     return result
 
 
@@ -81,6 +82,7 @@ def print_stats(predictions,y_test):
  
     
     return
+
 
 
 if __name__ == "__main__":
@@ -110,7 +112,8 @@ if __name__ == "__main__":
     predictions = classifier.predict(x_test)
     
     tree = np.load('tree.npy',allow_pickle = True).item()
-    trees = classifier.cost_complexity_pruning(tree)
+    print(tree)
+    #trees = classifier.cost_complexity_pruning(tree)
     
     #print(trees)
     
@@ -139,7 +142,8 @@ if __name__ == "__main__":
         classifier = classifier.train(x,y)
         predictions = classifier.predict(x_test)
         print_stats(predictions,y_test)
-    
+        
+    print(predictions)
     
     # Question 3.3
     print("\nQ3.3")
@@ -158,16 +162,19 @@ if __name__ == "__main__":
     print("\nQ3.4")
     predictions = crossval[1][np.argmax(crossval[0])].predict(x_test)
     print_stats(predictions,y_test)
-    q = np.empty([len(predictions),2],dtype=object)
-    
-    q[:,0] = predictions
+    print(predictions)
+    #q = np.empty([len(predictions),2],dtype=object)
+
+    print(predictions.shape)
+    #q[:,0] = predictions
 
     #Question 3.5
     print("\nQ3.5")
     predictions = weighted_predict(crossval[1],x_test)
     print_stats(predictions,y_test)
-    q[:,1] = predictions
+    #q[:,1] = predictions
     #print(q)
+
 
     
     

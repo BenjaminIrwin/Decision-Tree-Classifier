@@ -3,8 +3,8 @@
 # Coursework 1 Skeleton code
 # Prepared by: Josiah Wang
 #
-# Your tasks: Complete the train() and predict() methods of the 
-# DecisionTreeClassifier 
+# Your tasks: Complete the train() and predict() methods of the
+# DecisionTreeClassifier
 #http://mlwiki.org/index.php/Cost-Complexity_Pruning
 ##############################################################################
 
@@ -17,29 +17,27 @@ from tempfile import TemporaryFile
 from eval import Evaluator
 import copy
 
-from eval import Evaluator
 
 class DecisionTreeClassifier(object):
     """
     A decision tree classifier
- 
+   
     Attributes
     ----------
     is_trained : bool
         Keeps track of whether the classifier has been trained
-    
+   
     Methods
     -------
     train(X, y)
         Constructs a decision tree from data X and label y
     predict(X)
         Predicts the class label of samples X
-    
+   
     """
 
     def __init__(self):
         self.is_trained = False
-        self.root_node = {}
 
     def load_data(self, filename):
         """
@@ -57,11 +55,11 @@ class DecisionTreeClassifier(object):
         data_set = np.loadtxt(filename, dtype=str, delimiter=',')
         num_samp = len(data_set) #number of sample_is
         num_att = len(data_set[0]) #number of attributes
-        
+       
         #create attribute and label arrays filled with zeros
-        x = np.zeros((num_samp, num_att - 1))
+        x = np.zeros((num_samp, num_att - 1),dtype=int)
         y = np.zeros((num_samp,1), dtype=str)
-        
+       
         #fill arrays with correct values
         for sample_i in range(num_samp):
             for attribute_i in range(num_att):
@@ -70,8 +68,8 @@ class DecisionTreeClassifier(object):
                 else:
                     y[sample_i] = data_set[sample_i,attribute_i]
         return x, y
-    
-    
+   
+   
     def adjacent_values(vals, q1, q3):
         upper_adjacent_value = q3 + (q3 - q1) * 1.5
         upper_adjacent_value = np.clip(upper_adjacent_value, q3, vals[-1])
@@ -112,147 +110,8 @@ class DecisionTreeClassifier(object):
         print("attribute ranges:")
         print(attribute_ranges_1)
 
-
-    def adjacent_values(vals, q1, q3):
-        upper_adjacent_value = q3 + (q3 - q1) * 1.5
-        upper_adjacent_value = np.clip(upper_adjacent_value, q3, vals[-1])
-
-        lower_adjacent_value = q1 - (q3 - q1) * 1.5
-        lower_adjacent_value = np.clip(lower_adjacent_value, vals[0], q1)
-        return lower_adjacent_value, upper_adjacent_value
-
-    def set_axis_style(ax, labels):
-        ax.get_xaxis().set_tick_params(direction='out')
-        ax.xaxis.set_ticks_position('bottom')
-        ax.set_xticks(np.arange(1, len(labels) + 1))
-        ax.set_xticklabels(labels)
-        ax.set_xlim(0.25, len(labels) + 0.75)
-        ax.set_xlabel('Sample name')
-
-#
-#    def evaluate_input(self,x,y):
-#        """
-#        Function to evaluate data loaded from file
-#        Args:
-#            x (2D array) - 2D array of training data where each row
-#            corresponds to a different sample and each column corresponds to a
-#            different attribute.
-#            y (1D array) -  where each index corresponds to the
-#            ground truth label of the sample x[index][]
-#        """
-#
-#
-#        # create test data
-#        np.random.seed(19680801)
-#        data = [sorted(np.random.normal(0, std, 100)) for std in range(1, 5)]
-#
-#        fig, (ax1, ax2) = plt.subplots(figsize=(9, 4),
-#                                       sharey=True)
-#
-#        ax1.set_title('Default violin plot')
-#        ax1.set_ylabel('Observed values')
-#        ax1.violinplot(data)
-#
-#        parts = ax2.violinplot(
-#            data, showmeans=False, showmedians=False,
-#            showextrema=False)
-#
-#        for pc in parts['bodies']:
-#            pc.set_facecolor('#D43F3A')
-#            pc.set_edgecolor('black')
-#            pc.set_alpha(1)
-#
-#        quartile1, medians, quartile3 = np.percentile(data, [25, 50, 75],
-#                                                      axis=1)
-#        whiskers = np.array([
-#            self.adjacent_values(sorted_array, q1, q3)
-#            for sorted_array, q1, q3 in zip(data, quartile1, quartile3)])
-#        whiskersMin, whiskersMax = whiskers[:, 0], whiskers[:, 1]
-#
-#        inds = np.arange(1, len(medians) + 1)
-#        ax2.scatter(inds, medians, marker='o', color='white', s=30, zorder=3)
-#        ax2.vlines(inds, quartile1, quartile3, color='k', linestyle='-', lw=5)
-#        ax2.vlines(inds, whiskersMin, whiskersMax, color='k', linestyle='-',
-#                   lw=1)
-#
-#        # set style for the axes
-#        labels = ['x-box', 'y-box', 'width', 'height', 'nopix', 'x-bar',
-#                  'y-bar', 'x2bar', 'y2bar', 'xybar', 'x2ybr', 'xy2br',
-#                  'x-ege', 'xegvy', 'y-ege', 'yegvx']
-#        for ax in [ax1, ax2]:
-#            self.set_axis_style(ax, labels)
-#
-#        plt.subplots_adjust(bottom=0.15, wspace=0.05)
-#        plt.show()
-#
-#        """
-#        alphabet, count = np.unique(y, return_counts=True)
-#        alphabet_count = np.zeros((len(alphabet)))
-#        alphabet_proportions_1 = count / len(y)
-#        print("alphabet:")
-#        print(alphabet)
-#        print("alphabet proportions:")
-#        print(alphabet_proportions_1)
-#
-#        length, width = np.shape(x)
-#        print('test')
-#        print(np.amax(x[:, 0]))
-#        minimum_attribute_value = np.amin(x, axis=0)
-#        maximum_attribute_value = np.amax(x, axis=0)
-#        attribute_ranges_1 = maximum_attribute_value - minimum_attribute_value
-#        print("minimum:")
-#        print(minimum_attribute_value)
-#        print("maximum:")
-#        print(maximum_attribute_value)
-#        print("attribute ranges:")
-#        print(attribute_ranges_1)
-#        '''''
-#        filename = "data/train_noisy.txt"
-#        classifier = DecisionTreeClassifier()
-#        x,y = classifier.load_data(filename)
-#
-#        print(len(x))
-#        print(len(x[0,:]))
-#
-#        alphabet,count = np.unique(y,return_counts=True)
-#        alphabet_count = np.zeros((len(alphabet)))
-#        alphabet_proportions = count/len(y)
-#        print("alphabet:")
-#        print(alphabet)
-#        print("alphabet proportions:")
-#        print(alphabet_proportions)
-#
-#        length,width = np.shape(x)
-#
-#        minimum_attribute_value = np.amin(x,axis=0)
-#        maximum_attribute_value = np.amax(x,axis=0)
-#        attribute_ranges = maximum_attribute_value - minimum_attribute_value
-#        print("minimum:")
-#        print(minimum_attribute_value)
-#        print("maximum:")
-#        print(maximum_attribute_value)
-#        print("attribute ranges:")
-#        print(attribute_ranges)
-#
-#        range_difference = attribute_ranges_1-attribute_ranges
-#        proportion_difference = alphabet_proportions_1-alphabet_proportions
-#        print(range_difference)
-#        print(np.round(proportion_difference*100,2))
-#        """
-
     def train(self, x, y):
-        """
-        Function to creat decision tree based on training data in x, y
-        Args:
-            x (2D array) - 2D array of training data where each row
-            corresponds to a different sample and each column corresponds to a
-            different attribute.
-            y (1D array) -  where each index corresponds to the
-            ground truth label of the sample x[index][]
 
-        Output:
-            self
-        """
         # Make sure that x and y have the same number of instances
         assert x.shape[0] == len(y), \
         "Training failed. x and y must have the same number of instances."
@@ -268,56 +127,54 @@ class DecisionTreeClassifier(object):
 
     def induce_decision_tree(self, x, y):
 
-        """
-        When all data in x corresponds to 1 type of label, no further 
-        partitioning is needed. Hence return label as leaf node. 
-        """
+        # Check whether they all equal the same thing
+        labels = np.unique(y)
+        length = len(labels)
         if length == 1:
             return labels[0]
 
         # Nothing in the data set
         if len(x) == 0:
-            print("induce_decision_tree Error: No sample data passed into "
-                  "function.")
             return None
 
-
+        #node = self.find_best_node_simple(x, y)
         node = self.find_best_node_ideal(x, y)
+        #print(node)
 
-        #divide data on found partition
         child_1, child_2 = self.split_dataset(node)
 
         if len(child_1["attributes"]) == 0 or len(child_2["attributes"]) == 0:
-            whole_set = np.concatenate((child_1["labels"], child_2["labels"]), axis=0)
-            return self.most_common_label(data_set)
-        
-        
+            #whole_set = np.concatenate((child_1["labels"], child_2["labels"]), axis=0)
+            return self.terminal_leaf(node["data"]["labels"])[0]
+       
+       
         left_probability = len(child_1["labels"])/ len(node["data"])
         right_probability = len(child_2["labels"])/len(node["data"])
-      
+     
         parent_labels,parent_count = np.unique(node["data"]["labels"],return_counts=True)
         #node["most_occuring_letter"] = self.terminal_leaf(node["data"]["labels"])
-        node["majority_class"] = self.most_common_label(node["data"]["labels"])
+        node["majority_class"] = self.terminal_leaf(node["data"]["labels"])[0]
         del (node["data"])
-        
+       
         left_child_labels = self.count_occurrences(parent_labels,child_1["labels"])
         right_child_labels = self.count_occurrences(parent_labels,child_2["labels"])
 
 
         node['K'] = self.compute_k(left_probability,left_child_labels,
                                    right_probability,right_child_labels,parent_count)
-        
-        
+       
+       
         #Initial Filter to prevent overfitting
-        if node['K'] < 15:
-           return node["majority_class"]
+        #if node['K'] < 15:
+        #   return node["majority_class"]
 
-    
+   
         #Recursively call the function on the split dataset
         node["left"] = self.induce_decision_tree(child_1["attributes"], child_1["labels"])
         node["right"] = self.induce_decision_tree(child_2["attributes"], child_2["labels"])
 
         return node
+
 
     def count_occurrences(self,parent_occurrences,child_data):
 
@@ -362,7 +219,7 @@ class DecisionTreeClassifier(object):
         information = label_probabilities * np.log2(label_probabilities)
         entropy = -1 * np.sum(information)
         return entropy
-    
+   
     def most_common_label(self, data_set):
         """
         Returns the most frequent value in 1D numpy array
@@ -376,19 +233,10 @@ class DecisionTreeClassifier(object):
         return str(data_set[index])
 
 
-    def most_common_label(self, data_set):
-        """
-        Returns the most frequent value in 1D numpy array
-        Args:
-            data_set (1D array)
-        Output:
-           most common value in array
-        """
+    def terminal_leaf(self, data_set):
         labels, count = np.unique(data_set, return_counts=True)
         index = np.argmax(count)
-        #print("FROM HERE!!!!")
-        #print(data_set)
-        return str(data_set[index])
+        return data_set[index]
 
     def find_best_node_ideal(self, x, y):
         """
@@ -414,20 +262,20 @@ class DecisionTreeClassifier(object):
 
         for attribute in range(num_attributes):
             """
-            iterate through each attribute to find which attribute to 
+            iterate through each attribute to find which attribute to
             split data on --> find which attribute partition causes the
             greatest information gain.
             """
             #find the min and max value of that attribute
-            minimum_attribute_value = int(np.amin(x[:, attribute]))
-            maximum_attribute_value = int(np.amax(x[:, attribute]))
+            minimum_attribute_value = int(np.amin(x[:,attribute]))
+            maximum_attribute_value = int(np.amax(x[:,attribute]))
 
             for split_value in range(minimum_attribute_value,
                                      maximum_attribute_value+1):
                 """
-                iterate through each possible divide of that attribute 
-                (where to halve data) to find what value of that attribute to 
-                split data on --> find which partition causes the greatest 
+                iterate through each possible divide of that attribute
+                (where to halve data) to find what value of that attribute to
+                split data on --> find which partition causes the greatest
                 information gain.
                 """
                 #first half
@@ -438,15 +286,14 @@ class DecisionTreeClassifier(object):
                 subset_2_x = []
                 subset_2_y = []
 
-                # WHY DO YOU START FROM 1 HER
                 for row in range(num_samples):
 
                     #perform separation of data into two halves
                     if x[row][attribute] < split_value:
-                        subset_1_x.append(x[row][:])
+                        subset_1_x.append(x[row,:])
                         subset_1_y.append(y[row])
                     else:
-                        subset_2_x.append(x[row][:])
+                        subset_2_x.append(x[row,:])
                         subset_2_y.append(y[row])
 
                 #find entropy of each half
@@ -455,13 +302,13 @@ class DecisionTreeClassifier(object):
 
                 #normalise entropy for each of sub datasets
                 subset_1_entropy_normalised = \
-                    subset_1_entropy * len(subset_1_x) / num_samples
+                    subset_1_entropy * len(subset_1_x) /num_samples
                 subset_2_entropy_normalised = \
-                    subset_2_entropy * len(subset_2_x) / num_samples
+                    subset_2_entropy * len(subset_2_x) /num_samples
 
                 # get total entropy
-                total_split_entropy = subset_1_entropy_normalised + \
-                                      subset_2_entropy_normalised
+                total_split_entropy = (subset_1_entropy_normalised +
+                                      subset_2_entropy_normalised)
 
                 # get information gain
                 information_gain = root_entropy - total_split_entropy
@@ -501,11 +348,11 @@ class DecisionTreeClassifier(object):
         for row in range(len(x)):
 
             if x[row][attribute] < split_value:
-                left_x.append(x[row][:])
-                left_y.append(y[row][0])
+                left_x.append(x[row,:])
+                left_y.append(y[row])
             else:
-                right_x.append(x[row][:])
-                right_y.append(y[row][0])
+                right_x.append(x[row,:])
+                right_y.append(y[row])
 
         left = {"attributes": np.array(left_x), "labels": np.array(left_y)}
         right = {"attributes": np.array(right_x), "labels": np.array(right_y)}
@@ -516,21 +363,20 @@ class DecisionTreeClassifier(object):
 
         # make sure that classifier has been trained before predicting
         if not self.is_trained:
-            raise Exception("Decision Tree classifier has not yet been"
-                            " trained.")
+            raise Exception("Decision Tree classifier has not yet been trained.")
 
-        # set up empty N-dimensional vector to store predicted labels 
+        # set up empty N-dimensional vector to store predicted labels
         # feel free to change this if needed
         predictions = np.zeros((x.shape[0],), dtype=np.object)
-        
+       
         # load the classifier
         if not other_tree:
             tree = np.load('tree.npy',allow_pickle = True).item()
         else:
             tree = other_tree
-        
+       
         for j in range(0, len(x)):
-            predictions[j] = self.recursive_predict(tree, x[j][:])
+            predictions[j] = self.recursive_predict(tree, x[j,:])
 
         # remember to change this if you rename the variable
         return predictions
@@ -554,7 +400,7 @@ class DecisionTreeClassifier(object):
         # then recursively call function on tree from child node.
         if attributes[tree["attribute"]] < tree["value"]:
             return self.recursive_predict(tree["left"], attributes)
-        
+       
         return self.recursive_predict(tree["right"], attributes)
 
 
@@ -589,12 +435,12 @@ class DecisionTreeClassifier(object):
         patches = []
         patches.append(pp.Rectangle((mid_x-width/2,y-height),width,height,
                                     color = 'blue'))
-        annotation = "Root:\n" + "\nAtt Split: "+ attributes[tree["attribute"]] 
-        annotation += "<" + str(tree["value"]) 
+        annotation = "Root:\n" + "\nAtt Split: "+ attributes[tree["attribute"]]
+        annotation += "<" + str(tree["value"])
         annotation +=  "\nIG:"+str(np.round(tree["gain"],3))
-        center_x = mid_x 
+        center_x = mid_x
         center_y = y - height/2.0
-        ax.annotate(annotation, (center_x,center_y), color='white', 
+        ax.annotate(annotation, (center_x,center_y), color='white',
                     weight='bold',fontsize=4, ha='center', va='center')
 
         self.recursive_print(tree["left"],mid_x,x1,mid_x,y-2*height,
@@ -624,10 +470,10 @@ class DecisionTreeClassifier(object):
             annotation = "Leaf Node \nLabel = " + str(node)
             center_x = mid_x
             center_y = y - height/2.0
-            
-            ax.annotate(annotation, (center_x, center_y), color='white', 
+           
+            ax.annotate(annotation, (center_x, center_y), color='white',
                         weight='bold',fontsize=4, ha='center', va='center')
-            
+           
             plt.plot([parent_center_x,mid_x],[y+height,y],'black',
                     linestyle=':',marker='')
             return
@@ -636,8 +482,8 @@ class DecisionTreeClassifier(object):
 
             patches.append(pp.Rectangle((mid_x-width/2,y-height),
                                         width,height,color = 'blue'))
-            annotation = "IntNode:\n" + "\nAtt Split: "+ attributes[node["attribute"]] 
-            annotation += "<" + str(node["value"]) 
+            annotation = "IntNode:\n" + "\nAtt Split: "+ attributes[node["attribute"]]
+            annotation += "<" + str(node["value"])
             annotation +=  "\nIG:"+str(np.round(node["gain"],3))
             center_x = mid_x
             center_y = y - height/2.0
@@ -645,12 +491,12 @@ class DecisionTreeClassifier(object):
                         weight='bold',fontsize=4, ha='center', va='center')
             plt.plot([parent_center_x,mid_x],[y+height,y],'black',linestyle=':',marker='')
 
-        #Maximum depth to print out taken from Piazza 
+        #Maximum depth to print out taken from Piazza
         if depth ==3:
             return
 
         #Create the annotation to place into the center of the rectangle
-        annotation = "depth:"+str(0) + " " + attributes[node["attribute"]] 
+        annotation = "depth:"+str(0) + " " + attributes[node["attribute"]]
         annotation += "<" + str(node["value"])
         left_height = self.node_height(node["left"]) + 1
         right_height = self.node_height(node["right"]) + 1
@@ -662,26 +508,26 @@ class DecisionTreeClassifier(object):
                              y-2*height,attributes,depth+1,patches,ax)
         self.recursive_print(node["right"],mid_x,weighted_x,x2,
                              y-2*height,attributes,depth+1,patches,ax)
-        
-    
-    
+       
+   
+   
     #Attempt to get Cost Complexity Pruning working
     def cost_complexity_pruning(self,node):
 
         trees = np.array([],dtype=np.object)
         count = 0
         tree_copy = node.copy()
-        
+       
         while isinstance(tree_copy['left'],dict) or isinstance(tree_copy['right'],dict):
-            
+           
             trees = np.append(trees,self.prune_tree(tree_copy))
             count = count + 1
             tree_copy = copy.deepcopy(tree_copy)
-        
-        
+       
+       
         return trees
-    
-    
+   
+   
     def prune_tree(self,node):
 
         if not isinstance(node['left'],dict) and not isinstance(node['right'],dict):
@@ -694,18 +540,18 @@ class DecisionTreeClassifier(object):
             return node
 
         return node
-    
-    
+   
+   
     def calculate_best_pruned_tree(self,trees,x_test,y_test):
-        
+       
         eval = Evaluator()
         stored_j=0
         previous_accuracy = 0
-        
+       
         #go through each tree and compute the ratio of caculated error (right/total)
         for j in range(len(trees)):
-            
-            
+           
+           
             predictions = self.predict(x_test,trees[j])
             confusion = eval.confusion_matrix(predictions, y_test)
             accuracy = eval.accuracy(confusion)
@@ -713,21 +559,21 @@ class DecisionTreeClassifier(object):
             if accuracy > previous_accuracy:
                 stored_j = j
                 previous_accuracy = accuracy
-                
+               
         return trees[stored_j],previous_accuracy
-            
-            
+           
+           
     def get_wrong_prediction_count(predictions,y_test):
-        
+       
         count = 0
         for j in range(len(predictions)):
-            
+           
             if predictions[j] != y_test[j]:
                 count+=1
-        
+       
         return count
-    
-    
+   
+   
     #Nicks code for pruning starts here!! Simple pruninig method
     def prune_wrapper(self, tree, v_filename):
         """
@@ -744,18 +590,18 @@ class DecisionTreeClassifier(object):
         x, y = self.load_data(v_filename)
 
         return self.prune_tree_simple(tree, x, y)
-    
-    
+   
+   
     def prune_tree_simple(self, tree, x_val, y_val):
         """
-        Function to accept prunes which increase the tree's accuracy, otherwise 
+        Function to accept prunes which increase the tree's accuracy, otherwise
         ignore
         Args:
             tree (dict) - tree to be pruned
             x_val (2D array) - 2D array of attributes of validation set where
-                each row is a differnt sample and each column is a differnt 
+                each row is a differnt sample and each column is a differnt
                 attribute
-            y_val (1D array) - 1D array of correct labels for x_val validation 
+            y_val (1D array) - 1D array of correct labels for x_val validation
                 data
         Output:
             tree (dict or str) - tree pruned such that any additional pruning
@@ -781,13 +627,13 @@ class DecisionTreeClassifier(object):
                     #if greater or equal accuracy make tree = copy
                     root_accuracy = new_accuracy
                     tree = copy.deepcopy(tree_copy)
-        
+       
         print("New Accuracy: ", root_accuracy)
         return tree
-    
+   
     def prune(self, tree_copy, tree):
         """
-        Recursive function to replace first node with two leaves as the 
+        Recursive function to replace first node with two leaves as the
         majority class of that node. It will only do this if the node has not
         already been checked by the outer algorithm.
         Args:
@@ -795,7 +641,7 @@ class DecisionTreeClassifier(object):
             tree_copy (dict or str) - copy of tree
         Output:
             is_pruned, tree_copy, tree
-            
+           
             is_pruned (bool) - was a node found that could be pruned
             tree_copy (dict or str) - pruned tree
             tree (dict or str) - unpruned tree with node which was pruned in
@@ -831,7 +677,7 @@ class DecisionTreeClassifier(object):
                 return True, tree_copy, tree
 
         return False, tree_copy, tree
-    
+   
     def count_leaves(self, tree, count = 0):
         """
         Recursive function to count number of leaves in a tree
@@ -862,8 +708,79 @@ class DecisionTreeClassifier(object):
             if is_left_leaf:
                 count += 1
             count = self.count_leaves(tree["right"], count)
-            
+           
         return count
 
-    
-            
+    def find_best_node_simple(self, x, y):
+            """
+            Function to find the attribute and value on which a binary partition of
+            the data can be made to maximise information gain (entropy reduction)
+            Args:
+                x (2D array) - 2D array of training data where each row
+                corresponds to a different sample and each column corresponds to a
+                different attribute.
+                y (1D array) -  where each index corresponds to the
+                ground truth label of the sample x[index][]
+            Output:
+                node (dict) - dictionary contains information on partition,
+                including value and attribute to partition over.
+            """        
+            stored_value = 0
+            stored_attribute = 0
+            best_gain = 0
+
+            num_samples, num_attributes = np.shape(x)
+
+            root_entropy = self.find_total_entropy(y)
+
+            for attribute in range(num_attributes):
+                
+                """
+                iterate through each attribute to find which attribute to 
+                split data on --> find which attribute partition causes the
+                greatest information gain.
+                """
+                if y.ndim == 1:
+                    y = np.reshape(y, (len(y), 1))
+               
+                    
+                entire_data = np.append(x,y,axis=1)
+                entire_data = np.array(sorted(entire_data,key=lambda a_entry: int(a_entry[attribute])))
+                unique_values = np.unique(entire_data[:,attribute])
+                
+                if len(unique_values) ==1:
+                    continue
+                
+                for value in unique_values[:-1]:
+                    
+                    possible_position = np.where(entire_data[:,attribute] == value)
+                    node_position = possible_position[0][0] + 1
+                    
+                    subset_1_entropy = self.find_total_entropy(entire_data[:node_position,-1])
+                    subset_2_entropy = self.find_total_entropy(entire_data[node_position:,-1])
+                    
+                    #normalise entropy for each of sub datasets
+                    subset_1_entropy_normalised = \
+                            subset_1_entropy * node_position/num_samples
+                    subset_2_entropy_normalised = \
+                            subset_2_entropy * (len(entire_data)-node_position)/num_samples
+                        
+                    # get total entropy
+                    total_split_entropy = (subset_1_entropy_normalised + 
+                                            subset_2_entropy_normalised)
+                        
+                    # get information gain
+                    information_gain = root_entropy - total_split_entropy
+                        
+                    
+                    # check whether it is bigger than the previous
+                    if (information_gain > best_gain):
+                        stored_attribute = attribute
+                        stored_value = int(value)
+                        best_gain = information_gain
+
+            data = {"attributes": x, "labels": y}
+
+            #Returns the node
+            return {"value": stored_value, "attribute": stored_attribute, "gain": best_gain, "data": data, "left": None,
+                    "right": None,'K':None,"majority_class": None, "is_checked": False}
