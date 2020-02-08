@@ -122,7 +122,7 @@ class DecisionTreeClassifier(object):
         
         #Method 1 with Prepruning
         tree_1_pruned = self.induce_decision_tree(x,y,False,True)
-        
+
         #Method 2
         tree_2 = self.induce_decision_tree(x,y)
         
@@ -171,7 +171,8 @@ class DecisionTreeClassifier(object):
        
         left_child_labels = self.count_occurrences(parent_labels,child_1["labels"])
         right_child_labels = self.count_occurrences(parent_labels,child_2["labels"])
-
+        
+        node["parentlabels"] = parent_labels
         node['K'] = self.compute_k(left_probability,left_child_labels,
                                    right_probability,right_child_labels,parent_count)
        
@@ -329,7 +330,7 @@ class DecisionTreeClassifier(object):
 
         #Returns the node
         return {"value": stored_value, "attribute": stored_attribute, "gain": best_gain, "data": data, "left": None,
-                "right": None,'K':None,"majority_class": None, "is_checked": False}
+                "right": None,'K':None,"majority_class": None, "is_checked": False,"parentlabels":None}
     
     
     def find_best_node_simple(self, x, y):
@@ -403,7 +404,7 @@ class DecisionTreeClassifier(object):
 
         #Returns the node
         return {"value": stored_value, "attribute": stored_attribute, "gain": best_gain, "data": data, "left": None,
-                "right": None,'K':None,"majority_class": None, "is_checked": False}
+                "right": None,'K':None,"majority_class": None, "is_checked": False,"parentlabels":None}
 
     def split_dataset(self, node):
         """

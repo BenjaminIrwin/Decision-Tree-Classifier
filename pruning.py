@@ -76,6 +76,30 @@ class Pruning(object):
     
     
    
+    def post_chi_pruning(self,tree):
+        
+        """
+        Function impliments the same method as the pre-pruning
+        CHI^2 implemted above on a completed tree"
+        
+        As the K-Values were already calucalted and contained in 
+        the node it was simple algorithm to perfrom.
+        
+        """
+        
+        classifier = DecisionTreeClassifier()
+        classifier.is_trained = True
+        
+
+        
+    def climb_tree(self,node):
+        
+        if not isinstance(node['left'],dict) and not isinstance(node['right'],dict):
+            df = len(node["parentlabels"])-1 
+            if node['K'] <= chi2.isf(0.05,df):
+                return node["majority_class"]
+        
+
    
     #REDUCED ERROR PRUNINIG METHOD
     def prune_tree_reduced_error(self, tree, x_val, y_val):

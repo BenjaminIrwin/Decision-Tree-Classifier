@@ -258,6 +258,8 @@ if __name__ == "__main__":
     print("\nold accuracy on test set:" + str(accuracy_old))
     print("New accuracy on test set:" + str(accuracy_new))
     
+    print("Method 2: Post CHI^2 Pruning\n")
+    
   
 
     
