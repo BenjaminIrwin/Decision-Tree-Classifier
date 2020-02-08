@@ -6,60 +6,70 @@ import numpy as np
 import copy
 from classification import DecisionTreeClassifier
 from eval import Evaluator
+from scipy.stats import chi2
 
 class Pruning(object):
     
 
-    #COST COMPLEXITY PRUNING METHOD
+    #####COST COMPLEXITY PRUNING METHOD########
     def cost_complexity_pruning(self,node):
 
         trees = np.array([],dtype=np.object)
         count = 0
-        tree_copy = node.copy()
-        direction = left
+        tree_copy = copy.deepcopy(node)
+        direction = 0
        
         while isinstance(tree_copy['left'],dict) or isinstance(tree_copy['right'],dict):
             
-            trees = np.append(trees,self.prune_tree(tree_copy,direction))
+            trees = np.append(trees,self.prune_tree(tree_copy))
             count = count + 1
             tree_copy = copy.deepcopy(tree_copy)
             #Alternate direction
-            if direction == left:
-                direction = right
-            if direction == right:
-                direction = left
+            #if direction == 0:
+            #    direction = 1
+            #if direction == 1:
+            #    direction = 0
             
-        return trees
+        return 
    
    
-    def prune_tree(self,node,direction):
+    def prune_tree(self,node):
 
         if not isinstance(node['left'],dict) and not isinstance(node['right'],dict):
             return node['majority_class']
-        elif isinstance(node['left'],dict) and direction ==left:
+        elif isinstance(node['left'],dict):
             node['left'] = self.prune_tree(node['left'])
             return node
-        elif isinstance(node['right'], dict) and direction ==right:
+        elif isinstance(node['right'], dict):
             node['right'] = self.prune_tree(node['right'])
             return node
 
         return node
    
    
-    def calculate_best_pruned_tree(self,original_tree,trees,x_test,y_test):
+    def calculate_best_pruned_tree(self,original_tree,trees,x_val,y_val):
        
         eval = Evaluator()
+        classifier = DecisionTreeClassifier()
+        classifier.is_trained = True
+        original_predictions = classifier.predict(x_val,original_tree)
+        original_error = self.get_apperent_error_rate(original_predictions,y_val)
+
         stored_j=0
-        previous_accuracy = 0
-       
+        previous_alpha = 1000000
+
         #go through each tree and compute the ratio of caculated error (right/total)
         for j in range(len(trees)):
             
-            alpha = self
-            #print(accuracy)
-            if accuracy > previous_accuracy:
+            predictions = classifier.predict(x_val,tree[j])
+            error = self.get_apperent_error_rate(predictions,y_val)
+            original_number_leaves = self.count_leaves(original_tree)
+            number_of_leaves = self.count_leaves(tree[j])
+            alpha = (original_error - error)/(original_number_leaves - number_of_leaves)
+            
+            if alpha < previous_alpha:
                 stored_j = j
-                previous_accuracy = accuracy
+                previous_alpha = alpha
                
         return trees[stored_j],previous_accuracy
     
@@ -74,7 +84,9 @@ class Pruning(object):
        
         return count/len(predictions)
     
-    
+  ##### END OF COST COMPLEXITY PRUNING METHOD########  
+  
+  ##### POST CHI^2 PRUNING METHOD########
    
     def post_chi_pruning(self,tree):
         
@@ -86,22 +98,34 @@ class Pruning(object):
         the node it was simple algorithm to perfrom.
         
         """
+        tree["left"] = self.climb_tree(tree["left"])
+        tree["right"] = self.climb_tree(tree["right"])
         
-        classifier = DecisionTreeClassifier()
-        classifier.is_trained = True
-        
+        return tree
 
         
     def climb_tree(self,node):
         
+        if not isinstance(node,dict):
+            return node
+        
+        #If it has reached a node with leaf nodes as children
         if not isinstance(node['left'],dict) and not isinstance(node['right'],dict):
-            df = len(node["parentlabels"])-1 
+            #df = len(node["parentlabels"])-1
+            df = len(node["parentlabels"])*node["num_children"] -1  
             if node['K'] <= chi2.isf(0.05,df):
                 return node["majority_class"]
+                        
+        node["left"] = self.climb_tree(node["left"])
+        node["right"] = self.climb_tree(node["right"])
         
+        return node 
+            
+        
+    ##### END OF POST CHI^2 PRUNING METHOD########             
 
+     ##### REDUCED ERROR PRUNINIG METHOD########
    
-    #REDUCED ERROR PRUNINIG METHOD
     def prune_tree_reduced_error(self, tree, x_val, y_val):
         """
         Function to accept prunes which increase the tree's accuracy, otherwise
@@ -224,4 +248,5 @@ class Pruning(object):
            
         return count
     
+   ##### END OF REDUCED ERROR PRUNINIG METHOD######## 
     

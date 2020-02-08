@@ -4,7 +4,7 @@ import numpy as np
 from classification import DecisionTreeClassifier
 from eval import Evaluator
 from pruning import Pruning
-
+import copy
 
 def data_split(x, y, k):
 
@@ -97,8 +97,6 @@ if __name__ == "__main__":
     classifier = DecisionTreeClassifier()
     x,y = classifier.load_data(filename)
     
-    
-    #classifier.evaluate_input(x,y)
 
     #QUESTION 1
     print("Question 2")
@@ -120,7 +118,7 @@ if __name__ == "__main__":
 
     print("\nTree 1 Unpruned")
     tree = np.load('initial_tree.npy',allow_pickle = True).item()
-    predictions = classifier.predict(x_test)
+    predictions = classifier.predict(x_test,tree)
     confusion = eval.confusion_matrix(predictions, y_test)
     accuracy_1 = eval.accuracy(confusion)
     print("number of leaves:" ,prune.count_leaves(tree))
@@ -136,7 +134,7 @@ if __name__ == "__main__":
     
     print("\nTree 2 unpruned")
     tree_3 = np.load('simple_tree.npy',allow_pickle = True).item()
-    predictions = classifier.predict(x_test,tree_3)
+    predictions = classifier.predict(x_test)
     confusion = eval.confusion_matrix(predictions, y_test)
     accuracy_3 = eval.accuracy(confusion)
     print("number of leaves:",prune.count_leaves(tree_3))
@@ -210,9 +208,10 @@ if __name__ == "__main__":
     #print(q)
 
     
-    #Question 4
+    #QUESTION 4 - PRUNING
+    
     print("QUESTION 4")
-    print("Pruning the tree without prepruning")
+    eval = Evaluator()
     print("Method 1: Reduced Error Pruning\n")
     
     test_filename = "data/test.txt"
@@ -220,47 +219,80 @@ if __name__ == "__main__":
     x_val, y_val = classifier.load_data(val_filename)
     x_test,y_test = classifier.load_data(test_filename)
     
-    
-    tree = tree_3
-    new_tree = prune.prune_tree_reduced_error(tree, x_val, y_val)
-    #pruning reduces leaves from 274 to 69 --> accuracy from 0.89 to 0.93
-    print("number of leaves before:"+ str(prune.count_leaves(tree)))
+    ## METHOD 2's UNPREPRUNED TREE 
+    print("Pruning Method 2's UnPruned Tree")
+    reduced_error_tree_1 = copy.deepcopy(tree_3)
+    new_tree = prune.prune_tree_reduced_error(reduced_error_tree_1, x_val, y_val)
+   
+    print("number of leaves before:"+ str(prune.count_leaves(reduced_error_tree_1)))
     print("number of leaves after:"+str(prune.count_leaves(new_tree)))
     
-    #Pruning reduces accuracy on test set from 0.865 to 0.795
-    eval = Evaluator()
+    
     predictions_old = classifier.predict(x_test)
     predictions_new = classifier.predict(x_test,new_tree)
     confusion_old = eval.confusion_matrix(predictions_old, y_test)
     confusion_new = eval.confusion_matrix(predictions_new, y_test)
     accuracy_old = eval.accuracy(confusion_old)
     accuracy_new = eval.accuracy(confusion_new)
-    print("\nold accuracy on test set:" + str(accuracy_old))
+    print("\nOld accuracy on test set:" + str(accuracy_3))
     print("New accuracy on test set:" + str(accuracy_new))
     
-    print("\nPruning the tree with prepruning already\n")
-    tree = tree_4
-    new_tree = prune.prune_tree_reduced_error(tree, x_val, y_val)
-
-    #pruning reduces leaves from 274 to 69 --> accuracy from 0.89 to 0.93
-    print("\nnumber of leaves before:"+ str(prune.count_leaves(tree)))
+    ## METHOD 1's PREPRUNED TREE 
+    
+    print("\nPruning the Method 1's Prepruned tree\n")
+    reduced_error_tree_2 = copy.deepcopy(tree_2)
+    new_tree = prune.prune_tree_reduced_error(reduced_error_tree_2, x_val, y_val)
+    print("\nnumber of leaves before:"+ str(prune.count_leaves(reduced_error_tree_2)))
     print("number of leaves after:"+str(prune.count_leaves(new_tree)))
-    
-    #Pruning reduces accuracy on test set from 0.865 to 0.795
-    
-    eval = Evaluator()
+   
     predictions_old = classifier.predict(x_test)
     predictions_new = classifier.predict(x_test,new_tree)
     confusion_old = eval.confusion_matrix(predictions_old, y_test)
     confusion_new = eval.confusion_matrix(predictions_new, y_test)
     accuracy_old = eval.accuracy(confusion_old)
     accuracy_new = eval.accuracy(confusion_new)
-    print("\nold accuracy on test set:" + str(accuracy_old))
+    print("\nOld accuracy on test set:" + str(accuracy_2))
     print("New accuracy on test set:" + str(accuracy_new))
     
-    print("Method 2: Post CHI^2 Pruning\n")
     
-  
+    ##POST CHI^2 PRUNING METHOD#####
+    
+    print("\n")
+    print("\nMethod 2: Post CHI^2 Pruning\n")
+    ## METHOD 2's UNPREPRUNED TREE 
+    print("\nPruning Method 2's UnPruned Tree") 
+    chi_1_tree = prune.post_chi_pruning(tree_3)
+    predictions_new = classifier.predict(x_test,chi_1_tree)
+    confusion_new = eval.confusion_matrix(predictions_new, y_test)
+    accuracy_new = eval.accuracy(confusion_new)
+    print("\nOld accuracy on test set:" + str(accuracy_3))
+    print("New accuracy on test set:" + str(accuracy_new))
+    
+    ## METHOD 1's PREPRUNED TREE 
+    print("\nPruning Method 1's Pre Pruned Tree") 
+    chi_2_tree = prune.post_chi_pruning(tree_2)
+    predictions_new = classifier.predict(x_test,chi_2_tree)
+    confusion_new = eval.confusion_matrix(predictions_new, y_test)
+    accuracy_new = eval.accuracy(confusion_new)
+    print("\nOld accuracy on test set:" + str(accuracy_2))
+    print("New accuracy on test set:" + str(accuracy_new))
+    
+    
+    ##COST COMPLEXITY#####
+    print("\nCOMPLEXITY PRUNING\n")
+    cost_complexity_trees_1 = prune.cost_complexity_pruning(tree_3)
+    best_tree = prune.calculate_best_pruned_tree(tree_3,cost_complexity_trees_1,x_val,y_val)
+    
+    predictions_new = classifier.predict(x_test,best_tree)
+    confusion_new = eval.confusion_matrix(predictions_new, y_test)
+    accuracy_new = eval.accuracy(confusion_new)
+    print("\nOld accuracy on test set:" + str(accuracy_2))
+    print("New accuracy on test set:" + str(accuracy_new))
+    
+    
+    
+    
+    
 
     
     
