@@ -9,8 +9,7 @@ from eval import Evaluator
 
 class Pruning(object):
     
-    
-    
+
     #COST COMPLEXITY PRUNING METHOD
     def cost_complexity_pruning(self,node):
 
@@ -21,9 +20,10 @@ class Pruning(object):
        
         while isinstance(tree_copy['left'],dict) or isinstance(tree_copy['right'],dict):
             
-            trees = np.append(trees,self.prune_tree(tree_copy))
+            trees = np.append(trees,self.prune_tree(tree_copy,direction))
             count = count + 1
             tree_copy = copy.deepcopy(tree_copy)
+            #Alternate direction
             if direction == left:
                 direction = right
             if direction == right:
@@ -46,7 +46,7 @@ class Pruning(object):
         return node
    
    
-    def calculate_best_pruned_tree(self,tree,trees,x_test,y_test):
+    def calculate_best_pruned_tree(self,original_tree,trees,x_test,y_test):
        
         eval = Evaluator()
         stored_j=0
@@ -78,8 +78,6 @@ class Pruning(object):
    
    
     #REDUCED ERROR PRUNINIG METHOD
-    
-
     def prune_tree_reduced_error(self, tree, x_val, y_val):
         """
         Function to accept prunes which increase the tree's accuracy, otherwise
@@ -96,10 +94,12 @@ class Pruning(object):
                 would lower predictive accuracy on validation set.
         """
         classifier = DecisionTreeClassifier()
+        classifier.is_trained = True
         predictions = classifier.predict(x_val)
         eval = Evaluator()
         confusion = eval.confusion_matrix(predictions, y_val)
         root_accuracy = eval.accuracy(confusion)
+        print("Results on Validation set")
         print("Original Accuracy: ", root_accuracy)
 
         is_pruned = True
