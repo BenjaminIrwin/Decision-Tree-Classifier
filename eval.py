@@ -141,9 +141,8 @@ class Evaluator(object):
             total_false_negative = 0.0
 
             for j in range(len(confusion)):
-                for k in range(len(confusion)):
-                    if j != k and k != i:
-                        total_false_negative += confusion[j, k]
+                    if j != i:
+                        total_false_negative += confusion[i, j]
 
             r[i] = total_true_positive / (total_true_positive + total_false_negative)
 

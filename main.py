@@ -97,10 +97,8 @@ if __name__ == "__main__":
     classifier = DecisionTreeClassifier()
     x,y = classifier.load_data(filename)
     
-    
-    #classifier.evaluate_input(x,y)
 
-    #QUESTION 1
+    #QUESTION 2
     print("Question 2")
     print("Training the tree with two different methods")
 
@@ -176,9 +174,7 @@ if __name__ == "__main__":
         classifier = classifier.train(x,y)
         predictions = classifier.predict(x_test)
         print_stats(predictions,y_test)
-        
-    print(predictions)
-    
+
     #Question 3.3
     print("\nQ3.3")
     filename = "data/train_full.txt"
@@ -196,19 +192,11 @@ if __name__ == "__main__":
     print("\nQ3.4")
     predictions = crossval[1][np.argmax(crossval[0])].predict(x_test)
     print_stats(predictions,y_test)
-    print(predictions)
-    #q = np.empty([len(predictions),2],dtype=object)
-
-    print(predictions.shape)
-    #q[:,0] = predictions
 
     #Question 3.5
     print("\nQ3.5")
     predictions = weighted_predict(crossval[1],x_test)
     print_stats(predictions,y_test)
-    #q[:,1] = predictions
-    #print(q)
-
     
     #Question 4
     print("QUESTION 4")
