@@ -3,6 +3,8 @@ import numpy as np
 
 from classification import DecisionTreeClassifier
 from eval import Evaluator
+from pruning import Pruning
+
 
 def data_split(x, y, k):
 
@@ -86,41 +88,71 @@ def print_stats(predictions,y_test):
 
 
 if __name__ == "__main__":
-
+    
+    #QUESTION 1
+    print("Question 1")
+    print("Loading the data")
+    
     filename = "data/train_full.txt"
     classifier = DecisionTreeClassifier()
     x,y = classifier.load_data(filename)
+    
+    
     #classifier.evaluate_input(x,y)
+
+    #QUESTION 1
+    print("Question 2")
+    print("Training the tree with two different methods")
 
     print("Training the decision tree...")
     classifier = classifier.train(x,y)
-
+    
     print("Loading the test set...")
-
-    #tree = classifier.root_node
-    x_test = np.array([
-        [1, 6, 3],
-        [0, 5, 5],
-        [1, 5, 0],
-        [2, 4, 2]
-    ])
-
-    y_test = np.array(["A", "A", "C", "C"])
 
     filename = "data/test.txt"
     x_test, y_test = classifier.load_data(filename)
+    
+    print("\nPredicting on test.txt data with 4 different trees")
+    
+    #Load the evaulator class
+    eval = Evaluator()
+    prune = Pruning()
+
+    print("\nTree 1 Unpruned")
+    tree = np.load('initial_tree.npy',allow_pickle = True).item()
     predictions = classifier.predict(x_test)
+    confusion = eval.confusion_matrix(predictions, y_test)
+    accuracy_1 = eval.accuracy(confusion)
+    print("Tree 1 Unpruned Accuracy: " + str(np.round(accuracy_1*100,2)))
     
-    tree = np.load('tree.npy',allow_pickle = True).item()
-    print(tree)
-    #trees = classifier.cost_complexity_pruning(tree)
+    print("\nTree 1 pruned")
+    tree = np.load('initial_tree_pruned.npy',allow_pickle = True).item()
+    predictions = classifier.predict(x_test,tree)
+    confusion = eval.confusion_matrix(predictions, y_test)
+    accuracy_2 = eval.accuracy(confusion)
+    print("leaves" ,prune.count_leaves(tree))
+    print("Tree 1 pruned Accuracy: " + str(np.round(accuracy_2*100,2)))
     
-    #print(trees)
+    print("\nTree 2 unpruned")
+    tree = np.load('simple_tree.npy',allow_pickle = True).item()
+    predictions = classifier.predict(x_test,tree)
+    confusion = eval.confusion_matrix(predictions, y_test)
+    accuracy_3 = eval.accuracy(confusion)
+    print("leaves" ,prune.count_leaves(tree))
+    print("Tree 2 unpruned Accuracy: " + str(np.round(accuracy_3*100,2)))
     
-    #tree,accuracy = classifier.calculate_best_pruned_tree(trees,x_test,y_test)
-    #print(tree)
-    #print(accuracy)
-    #classifier.print_tree(tree)
+    print("\nTree 2 pruned")
+    tree = np.load('simple_tree_pruned.npy',allow_pickle = True).item()
+    predictions = classifier.predict(x_test,tree)
+    confusion = eval.confusion_matrix(predictions, y_test)
+    accuracy_4 = eval.accuracy(confusion)
+    print("leaves" ,prune.count_leaves(tree))
+    print("Tree 2 pruned Accuracy: " + str(np.round(accuracy_4*100,2)))
+    
+    
+    print("Question 2.3")
+    print("Printing the tree")
+    classifier.print_tree(tree)
     
     
     #### QUESTION 3 ##########
@@ -175,18 +207,21 @@ if __name__ == "__main__":
     #q[:,1] = predictions
     #print(q)
 
-
+    """
+    #Question 4
+    print("QUESTION 4")
+    print("Pruning the tree")
+    print("Method 1: Reduced Error Pruning")
     
-    
-    #Nicks question 4 stuff to make it work
-    
-    new_tree = classifier.prune_wrapper(tree, "data/validation.txt")
+    prune = Pruning()
+    x_val, y_val = classifier.load_data("data/validation.txt")
+    new_tree = prune_tree_reduced_error(self, tree, x_val, y_val):
     #classifier.print_tree(new_tree)
 
     #Nick Testing
     #pruning reduces leaves from 274 to 69 --> accuracy from 0.89 to 0.93
-    print(classifier.count_leaves(tree))
-    print(classifier.count_leaves(new_tree))
+    print(prune.count_leaves(tree))
+    print(prune.count_leaves(new_tree))
     
     # pruning reduces accuracy on test set from 0.865 to 0.795
     filename = "data/test.txt"
@@ -200,6 +235,8 @@ if __name__ == "__main__":
     accuracy_new = eval.accuracy(confusion_new)
     print(accuracy_old)
     print(accuracy_new)
+    """
+  
 
     
     

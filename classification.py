@@ -16,6 +16,7 @@ from matplotlib.collections import PatchCollection
 from tempfile import TemporaryFile
 from eval import Evaluator
 import copy
+from scipy.stats import chi2
 
 
 class DecisionTreeClassifier(object):
@@ -115,17 +116,30 @@ class DecisionTreeClassifier(object):
         # Make sure that x and y have the same number of instances
         assert x.shape[0] == len(y), \
         "Training failed. x and y must have the same number of instances."
-
-        tree = self.induce_decision_tree(x,y)
-        #print(tree)
-        np.save('tree.npy',tree)
-
+        
+        #Method 1
+        tree_1 = self.induce_decision_tree(x,y,False)
+        
+        #Method 1 with Prepruning
+        tree_1_pruned = self.induce_decision_tree(x,y,False,True)
+        
+        #Method 2
+        tree_2 = self.induce_decision_tree(x,y)
+        
+        #Method 2 with Prepruning
+        tree_2_pruned = self.induce_decision_tree(x,y,True,True)
+     
+        np.save('initial_tree.npy',tree_1)
+        np.save('initial_tree_pruned.npy',tree_1_pruned)
+        np.save('simple_tree.npy',tree_2)
+        np.save('simple_tree_pruned.npy',tree_2_pruned)
+        
         # set a flag so that we know that the classifier has been trained
         self.is_trained = True
 
         return self
-
-    def induce_decision_tree(self, x, y):
+    
+    def induce_decision_tree(self, x, y,suggested_method=True,pre_pruning=False):
 
         # Check whether they all equal the same thing
         labels = np.unique(y)
@@ -136,23 +150,22 @@ class DecisionTreeClassifier(object):
         # Nothing in the data set
         if len(x) == 0:
             return None
-
-        #node = self.find_best_node_simple(x, y)
-        node = self.find_best_node_ideal(x, y)
-        #print(node)
-
+        
+        #Choosing between the two methods of splitting the tree
+        if not suggested_method:
+            node = self.find_best_node_max_min(x, y)
+        else:
+            node = self.find_best_node_simple(x, y)
+            
         child_1, child_2 = self.split_dataset(node)
 
         if len(child_1["attributes"]) == 0 or len(child_2["attributes"]) == 0:
-            #whole_set = np.concatenate((child_1["labels"], child_2["labels"]), axis=0)
             return self.terminal_leaf(node["data"]["labels"])[0]
-       
        
         left_probability = len(child_1["labels"])/ len(node["data"])
         right_probability = len(child_2["labels"])/len(node["data"])
      
         parent_labels,parent_count = np.unique(node["data"]["labels"],return_counts=True)
-        #node["most_occuring_letter"] = self.terminal_leaf(node["data"]["labels"])
         node["majority_class"] = self.terminal_leaf(node["data"]["labels"])[0]
         del (node["data"])
        
@@ -163,19 +176,19 @@ class DecisionTreeClassifier(object):
         node['K'] = self.compute_k(left_probability,left_child_labels,
                                    right_probability,right_child_labels,parent_count)
        
-       
-        #Initial Filter to prevent overfitting
-        #if node['K'] < 15:
-        #   return node["majority_class"]
-
-   
+       #CHI2 prepruning - calculating the significance of the split
+        if pre_pruning :
+            df = len(parent_labels)-1 
+            if node['K'] <= chi2.isf(0.05,df):
+                return node["majority_class"]
+            
         #Recursively call the function on the split dataset
-        node["left"] = self.induce_decision_tree(child_1["attributes"], child_1["labels"])
-        node["right"] = self.induce_decision_tree(child_2["attributes"], child_2["labels"])
+        node["left"] = self.induce_decision_tree(child_1["attributes"], child_1["labels"],suggested_method,pre_pruning)
+        node["right"] = self.induce_decision_tree(child_2["attributes"], child_2["labels"],suggested_method,pre_pruning)
 
         return node
-
-
+    
+    
     def count_occurrences(self,parent_occurrences,child_data):
 
         child_occurrences = np.zeros((1,len(parent_occurrences)))
@@ -220,7 +233,7 @@ class DecisionTreeClassifier(object):
         entropy = -1 * np.sum(information)
         return entropy
    
-    def most_common_label(self, data_set):
+    def terminal_leaf(self, data_set):
         """
         Returns the most frequent value in 1D numpy array
         Args:
@@ -230,15 +243,9 @@ class DecisionTreeClassifier(object):
         """
         labels, count = np.unique(data_set, return_counts=True)
         index = np.argmax(count)
-        return str(data_set[index])
-
-
-    def terminal_leaf(self, data_set):
-        labels, count = np.unique(data_set, return_counts=True)
-        index = np.argmax(count)
         return data_set[index]
 
-    def find_best_node_ideal(self, x, y):
+    def find_best_node_max_min(self, x, y):
         """
         Function to find the attribute and value on which a binary partition of
         the data can be made to maximise information gain (entropy reduction)
@@ -736,16 +743,16 @@ class DecisionTreeClassifier(object):
             for attribute in range(num_attributes):
                 
                 """
-                iterate through each attribute to find which attribute to 
-                split data on --> find which attribute partition causes the
-                greatest information gain.
+                iterate through each attribute whilst sorting the date
+                if the class label changes split create a boundar at that
+                dataset
                 """
                 if y.ndim == 1:
                     y = np.reshape(y, (len(y), 1))
                
                     
                 entire_data = np.append(x,y,axis=1)
-                entire_data = np.array(sorted(entire_data,key=lambda a_entry: int(a_entry[attribute])))
+                entire_data = np.array(sorted(entire_data,key=lambda on_attribute: int(on_attribute[attribute])))
                 unique_values = np.unique(entire_data[:,attribute])
                 
                 if len(unique_values) ==1:
