@@ -30,26 +30,24 @@ classifier (use ``validation.txt`` for this instead).
 
 - ``classification.py``
 
-	* Contains the skeleton code for the ``DecisionTreeClassifier`` class. Your task 
-is to implement the ``train()`` and ``predict()`` methods.
+	* Contains the code ``DecisionTreeClassifier`` class.
 
 
 - ``eval.py``
 
-	* Contains the skeleton code for the ``Evaluator`` class. Your task is to 
-implement the ``confusion_matrix()``, ``accuracy()``, ``precision()``, 
-``recall()``, and ``f1_score()`` methods.
+	* Contains the code for the ``Evaluator`` class.
 
 
-- ``example_main.py``
+- ``main.py``
 
-	* Contains an example of how the evaluation script on LabTS might use the classes
-and invoke the methods defined in ``classification.py`` and ``eval.py``.
-
+	* Contains the implementation of the classes in classification.py and eval.py
 
 ### Instructions
 
-< Insert your own instructions here >
+< The programme can be run by simply running 'python3 main.py' from the command line.
+The main is structured in the same order as the brief. Answers to the relevant tasks 
+are printed out to the command line. For Q3.4 and Q3.5, they are implemented using free
+functions in the main. >
 
 
 
