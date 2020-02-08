@@ -452,7 +452,7 @@ class DecisionTreeClassifier(object):
        
         # load the classifier
         if not other_tree:
-            tree = np.load('tree.npy',allow_pickle = True).item()
+            tree = np.load('simple_tree.npy',allow_pickle = True).item()
         else:
             tree = other_tree
        
