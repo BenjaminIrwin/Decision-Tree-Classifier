@@ -172,13 +172,14 @@ class DecisionTreeClassifier(object):
         left_child_labels = self.count_occurrences(parent_labels,child_1["labels"])
         right_child_labels = self.count_occurrences(parent_labels,child_2["labels"])
         
+        node["num_children"] = len(child_1["labels"]) + len(child_2["labels"])
         node["parentlabels"] = parent_labels
         node['K'] = self.compute_k(left_probability,left_child_labels,
                                    right_probability,right_child_labels,parent_count)
        
        #CHI2 prepruning - calculating the significance of the split
         if pre_pruning :
-            df = len(parent_labels)-1 
+            df = len(parent_labels) -1  
             if node['K'] <= chi2.isf(0.05,df):
                 return node["majority_class"]
             
@@ -330,7 +331,7 @@ class DecisionTreeClassifier(object):
 
         #Returns the node
         return {"value": stored_value, "attribute": stored_attribute, "gain": best_gain, "data": data, "left": None,
-                "right": None,'K':None,"majority_class": None, "is_checked": False,"parentlabels":None}
+                "right": None,'K':None,"majority_class": None, "is_checked": False,"parentlabels":None,"num_children":None}
     
     
     def find_best_node_simple(self, x, y):
@@ -404,7 +405,7 @@ class DecisionTreeClassifier(object):
 
         #Returns the node
         return {"value": stored_value, "attribute": stored_attribute, "gain": best_gain, "data": data, "left": None,
-                "right": None,'K':None,"majority_class": None, "is_checked": False,"parentlabels":None}
+                "right": None,'K':None,"majority_class": None, "is_checked": False,"parentlabels":None,"num_children":None}
 
     def split_dataset(self, node):
         """
