@@ -268,16 +268,6 @@ if __name__ == "__main__":
     print("New accuracy on test set:" + str(accuracy_new))
     
     
-    ##COST COMPLEXITY#####
-    print("\nCOMPLEXITY PRUNING\n")
-    cost_complexity_trees_1 = prune.cost_complexity_pruning(tree_3)
-    best_tree = prune.calculate_best_pruned_tree(tree_3,cost_complexity_trees_1,x_val,y_val)
-    
-    predictions_new = classifier.predict(x_test,best_tree)
-    confusion_new = eval.confusion_matrix(predictions_new, y_test)
-    accuracy_new = eval.accuracy(confusion_new)
-    print("\nOld accuracy on test set:" + str(accuracy_2))
-    print("New accuracy on test set:" + str(accuracy_new))
     
     
     
