@@ -46,8 +46,11 @@ classifier (use ``validation.txt`` for this instead).
 
 < The programme can be run by simply running 'python3 main.py' from the command line.
 The main is structured in the same order as the brief. Answers to the relevant tasks 
-are printed out to the command line. For Q3.4 and Q3.5, they are implemented using free
-functions in the main. >
+are printed out to the command line and the following files are created: "initial_tree.npy", "simple_tree.npy", "simple_tree_pruned.npy" and "initial_tree_pruned.npy" which contains the created trees. 
+
+
+For Q3.4 and Q3.5, they are implemented using free
+functions "data_split", "cross_validation" and "weighted predict" in the main. >
 
 
 
