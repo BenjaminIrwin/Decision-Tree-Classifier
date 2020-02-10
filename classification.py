@@ -125,7 +125,8 @@ class DecisionTreeClassifier(object):
 
         #Method 2
         tree_2 = self.induce_decision_tree(x,y)
-        
+        self.tree = tree_2
+
         #Method 2 with Prepruning
         tree_2_pruned = self.induce_decision_tree(x,y,True,True)
      
@@ -453,7 +454,7 @@ class DecisionTreeClassifier(object):
        
         # load the classifier
         if not other_tree:
-            tree = np.load('simple_tree.npy',allow_pickle = True).item()
+            tree = self.tree
         else:
             tree = other_tree
        
