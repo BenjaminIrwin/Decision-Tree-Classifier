@@ -14,25 +14,16 @@ class Pruning(object):
     #####COST COMPLEXITY PRUNING METHOD########
     def cost_complexity_pruning(self,node):
 
-        trees = np.array([],dtype=np.object)
-        count = 0
-        tree_copy = copy.deepcopy(node)
-        direction = 0
-       
+        trees = np.array([], dtype=np.object)
+        tree_copy = node.copy()
+        i = 0
+
         while isinstance(tree_copy['left'],dict) or isinstance(tree_copy['right'],dict):
-            
-            trees = np.append(trees,self.prune_tree(tree_copy))
-            count = count + 1
+
+            trees = np.append(trees, self.prune_tree(tree_copy))
             tree_copy = copy.deepcopy(tree_copy)
-            #Alternate direction
-            #if direction == 0:
-            #    direction = 1
-            #if direction == 1:
-            #    direction = 0
-            
-        return 
-   
-   
+        return trees
+
     def prune_tree(self,node):
 
         if not isinstance(node['left'],dict) and not isinstance(node['right'],dict):
@@ -45,8 +36,7 @@ class Pruning(object):
             return node
 
         return node
-   
-   
+
     def calculate_best_pruned_tree(self,original_tree,trees,x_val,y_val):
        
         eval = Evaluator()
@@ -56,22 +46,24 @@ class Pruning(object):
         original_error = self.get_apperent_error_rate(original_predictions,y_val)
 
         stored_j=0
-        previous_alpha = 1000000
+        initial_alpha = 0
+        previous_diff = 0
+        previous_alpha = 0
 
         #go through each tree and compute the ratio of caculated error (right/total)
-        for j in range(len(trees)):
+        for j in range(1,len(trees)):
             
-            predictions = classifier.predict(x_val,tree[j])
+            predictions = classifier.predict(x_val,trees[j])
             error = self.get_apperent_error_rate(predictions,y_val)
             original_number_leaves = self.count_leaves(original_tree)
-            number_of_leaves = self.count_leaves(tree[j])
+            number_of_leaves = self.count_leaves(trees[j])
             alpha = (original_error - error)/(original_number_leaves - number_of_leaves)
-            
-            if alpha < previous_alpha:
+            diff = initial_alpha - alpha
+            if diff < previous_diff:
                 stored_j = j
                 previous_alpha = alpha
                
-        return trees[stored_j],previous_accuracy
+        return trees[stored_j], previous_alpha
     
                       
     def get_apperent_error_rate(self,predictions,y_test):
@@ -98,6 +90,7 @@ class Pruning(object):
         the node it was simple algorithm to perfrom.
         
         """
+        tree = copy.deepcopy(tree)
         tree["left"] = self.climb_tree(tree["left"])
         tree["right"] = self.climb_tree(tree["right"])
         
@@ -110,12 +103,12 @@ class Pruning(object):
             return node
         
         #If it has reached a node with leaf nodes as children
-        if not isinstance(node['left'],dict) and not isinstance(node['right'],dict):
-            #df = len(node["parentlabels"])-1
-            df = len(node["parentlabels"])*node["num_children"] -1  
-            if node['K'] <= chi2.isf(0.05,df):
-                return node["majority_class"]
+        #if not isinstance(node['left'],dict) and not isinstance(node['right'],dict):
+        df = len(node["parentlabels"])-1
+        if node['K'] <= chi2.isf(0.05,df):
+            return node["majority_class"]
                         
+
         node["left"] = self.climb_tree(node["left"])
         node["right"] = self.climb_tree(node["right"])
         
@@ -248,5 +241,4 @@ class Pruning(object):
            
         return count
     
-   ##### END OF REDUCED ERROR PRUNINIG METHOD######## 
-    
+   ##### END OF REDUCED ERROR PRUNINIG METHOD########
