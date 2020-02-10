@@ -30,8 +30,9 @@ def cross_validation(x, y, k):
         # split data correctly
         xval = xpart[i]
         yval = ypart[i]
-        xtrain = np.delete(xpart,i,0)[0]
-        ytrain = np.delete(ypart,i,0)[0]
+        xtrain = np.delete(xpart,i,0).reshape((k-1)*xval.shape[0],xval.shape[1])
+        ytrain = np.delete(ypart,i,0).reshape((k-1)*xval.shape[0],1)
+
 
         # train on training slice
         classifiers[i] = DecisionTreeClassifier()
