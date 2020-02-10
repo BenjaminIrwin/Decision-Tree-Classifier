@@ -300,7 +300,7 @@ class DecisionTreeClassifier(object):
                 subset_2_x = []
                 subset_2_y = []
 
-                for row in range(1,num_samples-1):
+                for row in range(num_samples):
 
                     #perform separation of data into two halves
                     if x[row][attribute] < split_value:
