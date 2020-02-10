@@ -196,50 +196,72 @@ if __name__ == "__main__":
     predictions = weighted_predict(crossval[1],x_test)
     print_stats(predictions,y_test)
     
-    #QUESTION 4 - PRUNING
+ #QUESTION 4 - PRUNING
     
     print("QUESTION 4")
     eval = Evaluator()
     print("Method 1: Reduced Error Pruning\n")
-    
+    x,y = classifier.load_data('data/train_noisy.txt')
+    classifier = classifier.train(x, y, True, "Tree_Noisy")
+    noisy_tree = np.load("Tree_Noisy.npy",allow_pickle = True).item()
+
+
+    trained_full_left_height = classifier.node_height(tree_3['left']) + 1
+    trained_full_right_height = classifier.node_height(tree_3['right']) + 1
+    trained_noisy_left_height = classifier.node_height(noisy_tree['left']) + 1
+    trained_noisy_right_height = classifier.node_height(noisy_tree['right']) + 1
+
+    print("Train Full Tree height is: " +str(trained_full_left_height) + "and" + str(trained_full_right_height))
+    print("Train Noisy Tree height is: " + str(trained_noisy_left_height) +"and" + str(trained_noisy_right_height))
+
     test_filename = "data/test.txt"
     val_filename = "data/validation.txt"
     x_val, y_val = classifier.load_data(val_filename)
     x_test,y_test = classifier.load_data(test_filename)
+
+    predictions_noisy = classifier.predict(x_test,noisy_tree)
+    confusion_noisy = eval.confusion_matrix(predictions_noisy, y_test)
+    accuracy_noisy = eval.accuracy(confusion_noisy)
+    print("\noriginal accuracy noisy:" + str(accuracy_noisy))
     
-    ## METHOD 2's UNPREPRUNED TREE 
-    print("Pruning Method 2's UnPruned Tree")
+    
+    ## Trained on Full Data
+    print("Pruning the Tree trained on Train Full")
     reduced_error_tree_1 = copy.deepcopy(tree_3)
     new_tree = prune.prune_tree_reduced_error(reduced_error_tree_1, x_val, y_val)
    
     print("number of leaves before:"+ str(prune.count_leaves(reduced_error_tree_1)))
     print("number of leaves after:"+str(prune.count_leaves(new_tree)))
-    
-    
-    predictions_old = classifier.predict(x_test)
+
+    full_pruned_left_height = classifier.node_height(new_tree['left']) + 1
+    full_pruned_right_height = classifier.node_height(new_tree['right']) + 1
+    print("Pruned full tree depth is: " + str(full_pruned_left_height ) + "and" + str(full_pruned_right_height))
+
     predictions_new = classifier.predict(x_test,new_tree)
-    confusion_old = eval.confusion_matrix(predictions_old, y_test)
     confusion_new = eval.confusion_matrix(predictions_new, y_test)
-    accuracy_old = eval.accuracy(confusion_old)
     accuracy_new = eval.accuracy(confusion_new)
     print("\nOld accuracy on test set:" + str(accuracy_3))
     print("New accuracy on test set:" + str(accuracy_new))
+
+
     
-    ## METHOD 1's PREPRUNED TREE 
+    ## Trained on Noisy data
     
-    print("\nPruning the Method 1's Prepruned tree\n")
-    reduced_error_tree_2 = copy.deepcopy(tree_2)
+    print("\nPruning the Tree trained on the noisy data")
+    reduced_error_tree_2 = copy.deepcopy(noisy_tree)
     new_tree = prune.prune_tree_reduced_error(reduced_error_tree_2, x_val, y_val)
     print("\nnumber of leaves before:"+ str(prune.count_leaves(reduced_error_tree_2)))
     print("number of leaves after:"+str(prune.count_leaves(new_tree)))
-   
-    predictions_old = classifier.predict(x_test)
+
+    noisy_pruned_left_height = classifier.node_height(new_tree['left']) + 1
+    noisy_pruned_right_height = classifier.node_height(new_tree['right']) + 1
+    print("Pruned Noisy tree depth is: " + str(noisy_pruned_left_height) + "and" + str(noisy_pruned_right_height))
+
+
     predictions_new = classifier.predict(x_test,new_tree)
-    confusion_old = eval.confusion_matrix(predictions_old, y_test)
     confusion_new = eval.confusion_matrix(predictions_new, y_test)
-    accuracy_old = eval.accuracy(confusion_old)
     accuracy_new = eval.accuracy(confusion_new)
-    print("\nOld accuracy on test set:" + str(accuracy_2))
+    print("\nOld accuracy on test set:" + str(accuracy_noisy))
     print("New accuracy on test set:" + str(accuracy_new))
     
     
@@ -248,23 +270,80 @@ if __name__ == "__main__":
     print("\n")
     print("\nMethod 2: Post CHI^2 Pruning\n")
     ## METHOD 2's UNPREPRUNED TREE 
-    print("\nPruning Method 2's UnPruned Tree") 
+    print("Pruning the Tree trained on Train Full")
     chi_1_tree = prune.post_chi_pruning(tree_3)
     predictions_new = classifier.predict(x_test,chi_1_tree)
     confusion_new = eval.confusion_matrix(predictions_new, y_test)
     accuracy_new = eval.accuracy(confusion_new)
     print("\nOld accuracy on test set:" + str(accuracy_3))
     print("New accuracy on test set:" + str(accuracy_new))
+
+    predictions_new = classifier.predict(x_val,chi_1_tree)
+    confusion_new = eval.confusion_matrix(predictions_new, y_val)
+    accuracy_new = eval.accuracy(confusion_new)
+    print("New accuracy on validation set:" + str(accuracy_new))
+
+    print("number of leaves before:"+ str(prune.count_leaves(tree_3)))
+    print("number of leaves after:"+str(prune.count_leaves(chi_1_tree)))
+
+    full_pruned_left_height = classifier.node_height(chi_1_tree['left']) + 1
+    full_pruned_right_height = classifier.node_height(chi_1_tree['right']) + 1
+    print("Pruned full tree depth is: " + str(full_pruned_left_height) + "and" + str(full_pruned_right_height))
     
-    ## METHOD 1's PREPRUNED TREE 
-    print("\nPruning Method 1's Pre Pruned Tree") 
-    chi_2_tree = prune.post_chi_pruning(tree_2)
+    ## Tree trained on Noisy data
+    print("\nPruning the Tree trained on the noisy data\n")
+    chi_2_tree = prune.post_chi_pruning(noisy_tree)
     predictions_new = classifier.predict(x_test,chi_2_tree)
     confusion_new = eval.confusion_matrix(predictions_new, y_test)
     accuracy_new = eval.accuracy(confusion_new)
-    print("\nOld accuracy on test set:" + str(accuracy_2))
+    print("\nOld accuracy on test set:" + str(accuracy_noisy))
     print("New accuracy on test set:" + str(accuracy_new))
-    
+
+    print("number of leaves before:"+ str(prune.count_leaves(noisy_tree)))
+    print("number of leaves after:"+str(prune.count_leaves(chi_2_tree)))
+
+    noisy_pruned_left_height = classifier.node_height(chi_2_tree['left']) + 1
+    noisy_pruned_right_height = classifier.node_height(chi_2_tree['right']) + 1
+    print("Pruned Noisy tree depth is: " + str(noisy_pruned_left_height) + "and" + str(noisy_pruned_right_height))
+
+    predictions_new = classifier.predict(x_val,chi_2_tree)
+    confusion_new = eval.confusion_matrix(predictions_new, y_val)
+    accuracy_new = eval.accuracy(confusion_new)
+    print("New accuracy on validation set:" + str(accuracy_new))
+
+    ##COST COMPLEXITY#####
+    print("\nCOMPLEXITY PRUNING\n")
+    cost_complexity_trees_1 = prune.cost_complexity_pruning(tree_3)
+    best_tree_full,alpha = prune.calculate_best_pruned_tree(tree_3,cost_complexity_trees_1, x_val, y_val)
+    predictions_new = classifier.predict(x_test, best_tree_full)
+    confusion_new = eval.confusion_matrix(predictions_new, y_test)
+    accuracy_new = eval.accuracy(confusion_new)
+    print("\nOld accuracy on test set:" + str(accuracy_3))
+    print("New accuracy on test set:" + str(accuracy_new))
+
+    print("number of leaves before:"+ str(prune.count_leaves(tree_3)))
+    print("number of leaves after:"+str(prune.count_leaves(best_tree_full)))
+
+    full_pruned_left_height = classifier.node_height(best_tree_full['left']) + 1
+    full_pruned_right_height = classifier.node_height(best_tree_full['right']) + 1
+    print("Pruned full tree depth is: " + str(full_pruned_left_height) + "and" + str(full_pruned_right_height))
+    print("alpha"+str(alpha))
+
+    cost_complexity_trees_2 = prune.cost_complexity_pruning(noisy_tree)
+    best_tree_noisy,alpha = prune.calculate_best_pruned_tree(noisy_tree,cost_complexity_trees_2, x_val, y_val)
+    predictions_new = classifier.predict(x_test,best_tree_noisy)
+    confusion_new = eval.confusion_matrix(predictions_new, y_test)
+    accuracy_new = eval.accuracy(confusion_new)
+    print("\nOld accuracy on test set:" + str(accuracy_noisy))
+    print("New accuracy on test set:" + str(accuracy_new))
+
+    print("number of leaves before:"+ str(prune.count_leaves(noisy_tree)))
+    print("number of leaves after:"+str(prune.count_leaves(best_tree_noisy)))
+
+    noisy_pruned_left_height = classifier.node_height(best_tree_noisy['left']) + 1
+    noisy_pruned_right_height = classifier.node_height(best_tree_noisy['right']) + 1
+    print("Pruned full tree depth is: " + str(noisy_pruned_left_height) + "and" + str(noisy_pruned_right_height))
+    print("alpha"+str(alpha))
     
     
     
