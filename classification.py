@@ -112,29 +112,33 @@ class DecisionTreeClassifier(object):
         print("attribute ranges:")
         print(attribute_ranges_1)
 
-    def train(self, x, y):
+    def train(self, x, y,pruning=False,name = False):
 
         # Make sure that x and y have the same number of instances
         assert x.shape[0] == len(y), \
         "Training failed. x and y must have the same number of instances."
-        
-        #Method 1
-        tree_1 = self.induce_decision_tree(x,y,False)
-        
-        #Method 1 with Prepruning
-        tree_1_pruned = self.induce_decision_tree(x,y,False,True)
 
-        #Method 2
-        tree_2 = self.induce_decision_tree(x,y)
-        self.tree = tree_2
+        if not pruning and not name:
+            #Method 1
+            tree_1 = self.induce_decision_tree(x,y,False)
 
-        #Method 2 with Prepruning
-        tree_2_pruned = self.induce_decision_tree(x,y,True,True)
+            #Method 1 with Prepruning
+            tree_1_pruned = self.induce_decision_tree(x,y,False,True)
+
+            #Method 2
+            tree_2 = self.induce_decision_tree(x,y)
+            self.tree = tree_2
+
+            #Method 2 with Prepruning
+            tree_2_pruned = self.induce_decision_tree(x,y,True,True)
      
-        np.save('initial_tree.npy',tree_1)
-        np.save('initial_tree_pruned.npy',tree_1_pruned)
-        np.save('simple_tree.npy',tree_2)
-        np.save('simple_tree_pruned.npy',tree_2_pruned)
+            np.save('initial_tree.npy',tree_1)
+            np.save('initial_tree_pruned.npy',tree_1_pruned)
+            np.save('simple_tree.npy',tree_2)
+            np.save('simple_tree_pruned.npy',tree_2_pruned)
+        else:
+            tree_1 = self.induce_decision_tree(x,y)
+            np.save(name, tree_1)
         
         # set a flag so that we know that the classifier has been trained
         self.is_trained = True
