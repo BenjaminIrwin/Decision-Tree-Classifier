@@ -149,22 +149,6 @@ if __name__ == "__main__":
     #Load the evaulator class
     eval = Evaluator()
     prune = Pruning()
-
-    print("\nTree 1 Unpruned")
-    tree = np.load('initial_tree.npy',allow_pickle = True).item()
-    predictions = classifier.predict(x_test,tree)
-    confusion = eval.confusion_matrix(predictions, y_test)
-    accuracy_1 = eval.accuracy(confusion)
-    print("number of leaves:" ,prune.count_leaves(tree))
-    print("Tree 1 Unpruned Accuracy: " + str(np.round(accuracy_1*100,2)))
-    
-    print("\nTree 1 pruned")
-    tree_2 = np.load('initial_tree_pruned.npy',allow_pickle = True).item()
-    predictions = classifier.predict(x_test,tree_2)
-    confusion = eval.confusion_matrix(predictions, y_test)
-    accuracy_2 = eval.accuracy(confusion)
-    print("number of leaves:" ,prune.count_leaves(tree_2))
-    print("Tree 1 pruned Accuracy: " + str(np.round(accuracy_2*100,2)))
     
     print("\nTree 2 unpruned")
     tree_3 = np.load('simple_tree.npy',allow_pickle = True).item()
@@ -184,8 +168,7 @@ if __name__ == "__main__":
     
     print("Question 2.3")
     print("Printing the tree")
-    classifier.print_tree(tree_2,"Method_1_Pruned")
-    classifier.print_tree(tree_3,"Method_2_UnPruned")
+    classifier.print_tree(tree_3,"Method_2_UnPruned.pdf")
     
     print("\n\n")
     

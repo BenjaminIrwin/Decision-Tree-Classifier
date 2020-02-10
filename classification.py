@@ -547,7 +547,8 @@ class DecisionTreeClassifier(object):
         ax.set_xlim((0,3000))
         ax.set_ylim((0,3000))
         ax.autoscale()
-        plt.savefig(name)
+        fig.tight_layout
+        plt.savefig(name,bbox_inches='tight')
         #plt.show()
 
 
