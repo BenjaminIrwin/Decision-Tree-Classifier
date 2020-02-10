@@ -380,11 +380,14 @@ class DecisionTreeClassifier(object):
                 continue
             
             for value in unique_values[:-1]:
-                
+                #Finds the positions where the sorted dataset equals the current value
                 possible_positions = np.where(entire_data[:,attribute] == value)
+                #Gets the first position of the value
                 node_position = possible_positions[0][0] + 1
                 
+                #Calculates the entropy before the node position
                 subset_1_entropy = self.find_total_entropy(entire_data[:node_position,-1])
+                #Calculates the entropy after the node position
                 subset_2_entropy = self.find_total_entropy(entire_data[node_position:,-1])
                 
                 #normalise entropy for each of sub datasets
