@@ -39,6 +39,7 @@ class DecisionTreeClassifier(object):
 
     def __init__(self):
         self.is_trained = False
+        self.tree = False
 
     def load_data(self, filename):
         """
@@ -454,7 +455,10 @@ class DecisionTreeClassifier(object):
        
         # load the classifier
         if not other_tree:
-            tree = self.tree
+            if self.tree == False:
+                tree = np.load('simple_tree.npy',allow_pickle = True).item()  
+            else:
+                tree = self.tree
         else:
             tree = other_tree
        
