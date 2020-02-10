@@ -6,6 +6,16 @@ from eval import Evaluator
 from pruning import Pruning
 import copy
 
+"""
+Function to split data
+    Args:
+        x (C x N np.array) - array containing the N attributes for C instances
+        y (C x 1 np.array) - array containing ground truths for C instances
+        k (int) - nr of parts the data is to be split in 
+    Output:
+        (x, y) (tuple of np.arrays) - x (k x C x N): array containing the N attributes for C instances split                                        into k parts
+        y(k x 1 x N): Array containing ground truths for C instances split into k parts
+"""
 def data_split(x, y, k):
 
     data = np.array(np.concatenate((x, y), axis=1))
@@ -18,7 +28,17 @@ def data_split(x, y, k):
 
     return xpart, ypart
 
-
+"""
+Function to perform cross validation
+    Args:
+        x (C x N np.array) - array containing the N attributes for C instances
+        y (C x 1 np.array) - array containing ground truths for C instances
+        k (int) - nr of folds
+    Output:
+        (accuracy, classifiers) - accuracy (1 x k np.array): array containing the accuracy for each model
+                                - classifiers (1 x k np.array): Array containing the DecisionTreeClassifier()
+                                trained models
+"""
 def cross_validation(x, y, k):
 
     xpart, ypart = data_split(x,y,k)
@@ -48,6 +68,15 @@ def cross_validation(x, y, k):
 
     return accuracy, classifiers
 
+"""
+Function to let k models vote on a solution
+    Args:
+        classifiers (1 x k np.array): Array containing the DecisionTreeClassifier()
+                                trained models
+        x (C x N np.array) - array containing the N attributes for C instances of test set 
+    Output:
+        results (1 x C np.array) - final predictions for C instances as voted by the k models
+"""
 def weighted_predict(classifiers,x_test):
 
     predictions = np.zeros([len(classifiers),len(x_test)],dtype=object)
@@ -63,7 +92,14 @@ def weighted_predict(classifiers,x_test):
 
     return result
 
-
+"""
+Function to print validation metrics
+    Args:
+        predictions (1 x C np.array) - final predictions for C instances as voted by the k models
+        y (C x 1 np.array) - array containing ground truths for C instances
+    Output:
+        None
+"""
 def print_stats(predictions,y_test):
     
     eval = Evaluator()
