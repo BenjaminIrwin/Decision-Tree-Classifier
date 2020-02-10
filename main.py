@@ -58,11 +58,8 @@ def weighted_predict(classifiers,x_test):
 
     for i in range(predictions.shape[1]):
         vals, counts = np.unique(predictions[:,i], return_counts = True)
-        #print("vals counts")
-        #print(vals,counts)
         result[i] = vals[np.argmax(counts)]        
 
-   # print(predictions)
     return result
 
 
